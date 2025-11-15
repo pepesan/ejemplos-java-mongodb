@@ -1,0 +1,101 @@
+// Ejemplos de Índices en MongoDB
+
+// Crear una base de datos llamada "demo_indices"
+db.usuarios_demo.insertMany([
+  { nombre: "Ana", edad: 30, ciudad: "Madrid" },
+  { nombre: "Luis", edad: 25, ciudad: "Barcelona" },
+  { nombre: "Marta", edad: 40, ciudad: "Madrid" },
+  { nombre: "Pedro", edad: 35, ciudad: "Sevilla" }
+]);
+
+// Crear un índice simple en el campo "ciudad"
+db.usuarios_demo.createIndex({ ciudad: 1 });
+// consulta el índice creado
+db.usuarios_demo.find({ ciudad: "Madrid" });
+
+// Consulta los índices existentes en la colección
+db.usuarios_demo.getIndexes();
+
+
+// EJemplo de índice compuesto
+
+// Metemos datos en la colección "registros_ventas"
+db.registros_ventas.insertMany([
+  { producto: "PC", precio: 900, tienda: "Madrid" },
+  { producto: "PC", precio: 850, tienda: "Valencia" },
+  { producto: "TV", precio: 600, tienda: "Madrid" },
+  { producto: "Tablet", precio: 300, tienda: "Madrid" }
+]);
+// Crear un índice compuesto en los campos "producto" (ascendente) y "precio" (descendente)
+db.registros_ventas.createIndex({ producto: 1, precio: -1 });
+// consulta el índice creado
+db.registros_ventas.find({ producto: "PC" }).sort({ precio: -1 });
+
+// Índices en arrays
+// Metemos datos en la colección "catalogo_etiquetas"
+db.catalogo_etiquetas.insertMany([
+  { titulo: "Guía MongoDB", tags: ["mongodb", "database", "nosql"] },
+  { titulo: "Node.js práctico", tags: ["javascript", "backend"] },
+  { titulo: "Seguridad Web", tags: ["ciberseguridad", "backend"] }
+]);
+// Crear un índice en el campo "tags"
+db.catalogo_etiquetas.createIndex({ tags: 1 });
+
+// consulta el índice creado
+db.catalogo_etiquetas.find({ tags: "backend" });
+
+// Índices geoespaciales
+// Metemos datos en la colección "puntos_interes"
+db.puntos_interes.insertMany([
+  {
+    nombre: "Museo del Prado",
+    ubicacion: { type: "Point", coordinates: [-3.6921, 40.4138] }
+  },
+  {
+    nombre: "Sagrada Familia",
+    ubicacion: { type: "Point", coordinates: [2.1744, 41.4036] }
+  }
+]);
+// Crear un índice geoespacial 2dsphere en el campo "ubicacion"
+db.puntos_interes.createIndex({ ubicacion: "2dsphere" });
+// consulta el índice creado
+db.puntos_interes.getIndexes();
+db.puntos_interes.find({
+  ubicacion: {
+    $near: {
+      $geometry: { type: "Point", coordinates: [-3.70, 40.40] },
+      $maxDistance: 5000
+    }
+  }
+});
+
+// Índices de texto
+// Metemos datos en la colección "docs_busqueda"
+db.docs_busqueda.insertMany([
+  { titulo: "Introducción a MongoDB", cuerpo: "Base de datos NoSQL muy flexible" },
+  { titulo: "Aprende Node.js", cuerpo: "JavaScript del lado del servidor" },
+  { titulo: "Índices en MongoDB", cuerpo: "Mejoran el rendimiento de las consultas" }
+]);
+// Crear un índice de texto en los campos "titulo" y "cuerpo"
+db.docs_busqueda.createIndex({ titulo: "text", cuerpo: "text" });
+// consulta el índice creado
+db.docs_busqueda.getIndexes();
+// Realizar una búsqueda de texto para la palabra "MongoDB"
+db.docs_busqueda.find({ $text: { $search: "MongoDB" } });
+
+// Índices TTL (Time To Live)
+// Metemos datos en la colección "logs_temporales"
+db.logs_temporales.insertOne({
+  evento: "login",
+  creado: new Date()
+});
+// Crear un índice TTL en el campo "creado" que expire documentos después de 600 segundos (10 minutos)
+db.logs_temporales.createIndex(
+  { creado: 1 },
+  { expireAfterSeconds: 600 }
+);
+
+
+
+
+
