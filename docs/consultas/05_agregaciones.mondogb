@@ -1,0 +1,72 @@
+# Ejemplo de inserción de documentos en una colección "zipcodes"
+db.zipcodes.insertMany([
+  {
+    _id: "10280",
+    city: "NEW YORK",
+    state: "NY",
+    pop: 5574,
+    loc: [ -74.016323, 40.710537 ]
+  },
+  {
+    _id: "10001",
+    city: "NEW YORK",
+    state: "NY",
+    pop: 21102,
+    loc: [ -73.996705, 40.748428 ]
+  },
+  {
+    _id: "11201",
+    city: "BROOKLYN",
+    state: "NY",
+    pop: 51110,
+    loc: [ -73.989304, 40.694004 ]
+  },
+  {
+    _id: "90001",
+    city: "LOS ANGELES",
+    state: "CA",
+    pop: 57110,
+    loc: [ -118.245321, 34.052234 ]
+  },
+  {
+    _id: "94102",
+    city: "SAN FRANCISCO",
+    state: "CA",
+    pop: 33000,
+    loc: [ -122.419416, 37.774929 ]
+  },
+  {
+    _id: "60601",
+    city: "CHICAGO",
+    state: "IL",
+    pop: 10600,
+    loc: [ -87.623177, 41.885379 ]
+  },
+  {
+    _id: "60616",
+    city: "CHICAGO",
+    state: "IL",
+    pop: 28500,
+    loc: [ -87.619705, 41.847170 ]
+  }
+])
+
+# Ejemplo de agregación para calcular la población total por estado
+db.zipcodes.aggregate([
+    {
+        $group: {
+            _id: "$state",
+            totalPopulation: { $sum: "$pop" }
+        }
+    },
+    {
+        $sort: { totalPopulation: -1 }
+    }
+])
+
+# Ejemplo de agregación para encontrar estados con población mayor a 70 mil
+db.zipcodes.aggregate( [
+  { $group: { _id: "$state", totalPop:  { $sum:"$pop" } } },
+{ $match: { totalPop: { $gte: 70*1000 } } }
+])
+

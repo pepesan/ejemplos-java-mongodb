@@ -1,0 +1,108 @@
+// Ejemplos de Map Reduce
+
+db.ventasTiendas.insertMany([
+  { tienda: "Madrid",    categoria: "Electrónica",   importe: 1200 },
+  { tienda: "Madrid",    categoria: "Hogar",         importe:  400 },
+  { tienda: "Madrid",    categoria: "Electrónica",   importe:  850 },
+
+  { tienda: "Barcelona", categoria: "Hogar",         importe:  700 },
+  { tienda: "Barcelona", categoria: "Electrónica",   importe: 1500 },
+
+  { tienda: "Sevilla",   categoria: "Deporte",       importe:  300 },
+  { tienda: "Sevilla",   categoria: "Hogar",         importe:  250 }
+])
+
+// Función Map que emite la categoría y el valor 1 para cada venta
+var mapFunction = function() {
+  emit(this.categoria, 1);
+};
+// Función Reduce que suma los valores para cada categoría
+var reduceFunction = function(categoria, values) {
+  return Array.sum(values);
+};
+// Ejecuta Map Reduce en la colección ventasTiendas
+db.ventasTiendas.mapReduce(
+  mapFunction,
+  reduceFunction,
+  { out: "ventas_por_categoria" }
+)
+// Muestra los resultados almacenados en la colección ventas_por_categoria
+db.ventas_por_categoria.find()
+
+// Alternativa con Aggregation Framework
+db.ventasTiendas.aggregate([
+  {
+    $group: {
+      _id: "$categoria",
+      totalVentas: { $sum: 1 }
+    }
+  }
+])
+
+
+// Otro ejemplo de Map Reduce para sumar importes por tienda y categoría
+// Función Map que emite tienda y categoría como clave, y el importe como valor
+var mapPorTiendaYCategoria = function () {
+  emit(
+    { tienda: this.tienda, categoria: this.categoria },
+    this.importe
+  );
+};
+
+
+// Función Reduce que suma los importes
+var reduceSumar = function (key, values) {
+  return Array.sum(values);
+};
+// Ejecuta Map Reduce
+db.ventasTiendas.mapReduce(
+  mapPorTiendaYCategoria,
+  reduceSumar,
+  { out: "importe_por_tienda_y_categoria" }
+);
+
+// Muestra los resultados
+db.importe_por_tienda_y_categoria.find();
+
+// Alternativa con Aggregation Framework
+db.ventasTiendas.aggregate([
+  {
+    $group: {
+      _id: { tienda: "$tienda", categoria: "$categoria" },
+      importeTotal: { $sum: "$importe" }
+    }
+  }
+]);
+
+
+// Ejemplo de Map Reduce con filtro (solo ventas de Madrid)
+// Función Map que emite categoría e importe
+var mapFiltrado = function () {
+  emit(this.categoria, this.importe);
+};
+
+// Función Reduce que suma los importes
+var reduceFiltrado = function (categoria, values) {
+  return Array.sum(values);
+};
+// Ejecuta Map Reduce con filtro
+db.ventasTiendas.mapReduce(
+  mapFiltrado,
+  reduceFiltrado,
+  {
+    out: { inline: 1 },          // no crea colección, devuelve el resultado
+    query: { tienda: "Madrid" }  // solo ventas de Madrid
+  }
+);
+
+// Alternativa con Aggregation Framework con filtro
+db.ventasTiendas.aggregate([
+  { $match: { tienda: "Madrid" } },
+  {
+    $group: {
+      _id: "$categoria",
+      importeTotal: { $sum: "$importe" }
+    }
+  }
+]);
+
