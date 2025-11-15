@@ -1,0 +1,13 @@
+// seleccionar (o crear) la base de datos
+use miBaseDeDatos
+
+// mostrar la base de datos actual
+db
+
+// mostrar las bases de datos existentes
+show dbs
+
+
+// borrado de una base de datos
+use miBaseDeDatos
+db.dropDatabase()

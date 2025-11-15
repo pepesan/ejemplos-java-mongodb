@@ -1,0 +1,11 @@
+// Crea coleccion "productos"
+db.createCollection("productos")
+
+// Lista las colecciones en la base de datos actual
+show collections
+
+// Borra la coleccion "productos"
+db.productos.drop()
+
+// borra contenido de la coleccion "productos"
+db.productos.deleteMany({})

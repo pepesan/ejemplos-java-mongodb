@@ -1,0 +1,41 @@
+// Crea la coleccion "clientes"
+db.createCollection("clientes")
+
+
+// Se crea al insertar el primer documento
+db.clientes.insertOne({ nombre: "Ana", edad: 30, email: "ana@example.com" })
+
+// Lista el contenido de la coleccion "clientes"
+db.clientes.find()
+
+// Inserta varios documentos en la coleccion "clientes"
+db.clientes.insertMany([
+  { nombre: "Marta", edad: 28, email: "marta@example.com" },
+  { nombre: "Carlos", edad: 35, email: "carlos@example.com" }
+])
+
+// Leer con formato legible
+
+db.clientes.find().pretty()
+
+// Actualizar un cliente
+db.clientes.updateOne(
+  { nombre: "Marta" },
+  { $set: { edad: 41 } }
+)
+
+// Actualizar varios
+db.clientes.updateMany(
+  { edad: { $lt: 35 } },
+  { $set: { joven: true } }
+)
+
+// Borrar (Delete)
+
+db.clientes.deleteOne({ nombre: "Marta" })
+
+// Borrar varios
+db.clientes.deleteMany({ edad: { $gt: 40 } })
+
+// Borrar toda la coleccion
+db.clientes.drop()
