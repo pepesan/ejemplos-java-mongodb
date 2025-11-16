@@ -70,3 +70,150 @@ db.zipcodes.aggregate( [
 { $match: { totalPop: { $gte: 70*1000 } } }
 ])
 
+// Vistas
+
+// Creamos una colección "orders" con datos de ejemplo
+db.orders.insertMany([
+  {
+    _id: 1,
+    customerId: 101,
+    items: [
+      { product: "Laptop", quantity: 1, price: 1200 },
+      { product: "Mouse", quantity: 2, price: 25 }
+    ],
+    total: 1250,
+    status: "completed",
+    createdAt: ISODate("2025-01-12T10:15:00Z"),
+    region: "EU"
+  },
+  {
+    _id: 2,
+    customerId: 102,
+    items: [
+      { product: "Keyboard", quantity: 1, price: 80 }
+    ],
+    total: 80,
+    status: "pending",
+    createdAt: ISODate("2025-01-13T16:22:00Z"),
+    region: "US"
+  },
+  {
+    _id: 3,
+    customerId: 101,
+    items: [
+      { product: "Monitor", quantity: 2, price: 300 }
+    ],
+    total: 600,
+    status: "completed",
+    createdAt: ISODate("2025-01-14T08:00:00Z"),
+    region: "EU"
+  }
+]);
+// Crear una vista "completedOrders" que muestra solo los pedidos completados
+db.createView(
+  "completedOrders",
+  "orders",
+  [
+    { $match: { status: "completed" } },
+    {
+      $project: {
+        _id: 1,
+        customerId: 1,
+        total: 1,
+        createdAt: 1,
+        region: 1
+      }
+    }
+  ]
+);
+
+// Ver todos los pedidos completados
+db.completedOrders.find();
+
+// Filtrar pedidos completados de la región EU
+db.completedOrders.find({ region: "EU" });
+
+// Ordenar pedidos completados por fecha descendente
+db.completedOrders.find().sort({ createdAt: -1 });
+
+// Contar cuántos pedidos completados hay
+db.completedOrders.countDocuments();
+
+// Crear una vista "ordersWithVat" que añade el campo totalWithVat (21% IVA)
+db.createView(
+  "ordersWithVat",
+  "orders",
+  [
+    {
+      $addFields: {
+        totalWithVat: { $multiply: ["$total", 1.21] }
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        customerId: 1,
+        total: 1,
+        totalWithVat: 1,
+        createdAt: 1,
+        region: 1
+      }
+    }
+  ]
+);
+
+// Ver todos los pedidos con su total y total con IVA
+db.ordersWithVat.find();
+
+// Ver solo el total con IVA de pedidos de la región EU
+db.ordersWithVat.find(
+  { region: "EU" },
+  { _id: 0, customerId: 1, totalWithVat: 1 }
+);
+
+// Pedidos cuyo total con IVA supera 500
+db.ordersWithVat.find({ totalWithVat: { $gt: 500 } });
+
+// Ordenar por totalWithVat descendente
+db.ordersWithVat.find().sort({ totalWithVat: -1 });
+
+// Crear una vista "dailySales" que agrupa las ventas diarias
+db.createView(
+  "dailySales",
+  "orders",
+  [
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+        },
+        totalSales: { $sum: "$total" },
+        ordersCount: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        date: "$_id",
+        totalSales: 1,
+        ordersCount: 1
+      }
+    }
+  ]
+);
+
+// Ver el resumen de ventas por día
+db.dailySales.find();
+
+// Ver el resumen solo de un día concreto
+db.dailySales.find({ date: "2025-01-12" });
+
+// Ordenar los días por total de ventas descendente
+db.dailySales.find().sort({ totalSales: -1 });
+
+// Mostrar solo fecha y número de pedidos
+db.dailySales.find(
+  {},
+  { _id: 0, date: 1, ordersCount: 1 }
+);
+
