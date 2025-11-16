@@ -1,0 +1,33 @@
+// Journal y Write Concern en MongoDB
+// Una escritura que no requiere confirmación del servidor devuelve el control de inmediato
+db.inventory.insertOne(
+  { product: "Laptop Stand", stock: 20 },
+  { writeConcern: { w: 0 } }
+);
+
+// Garantizamos que la escritura se haya aplicado en el nodo primario:
+
+db.inventory.insertOne(
+  { product: "Bluetooth Mouse", stock: 50 },
+  { writeConcern: { w: 1 } }
+);
+
+// Garantizamos que la operación ha sido registrada en el journal:
+
+db.inventory.insertOne(
+  { product: "USB-C Hub", stock: 15 },
+  { writeConcern: { w: 1, j: true } }
+);
+
+// Exigimos que la escritura se replique en la mayoría de nodos:
+
+db.inventory.insertOne(
+  { product: "Ergonomic Desk", stock: 5 },
+  { writeConcern: { w: "majority", wtimeout: 2000 } }
+);
+
+// Todas las operaciones de la sesión usen un write concern específico:
+
+db.getMongo().setWriteConcern(
+  { w: "majority", j: true, wtimeout: 2000 }
+);

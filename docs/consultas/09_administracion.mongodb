@@ -1,0 +1,40 @@
+// Sentencias para la administración de MongoDB
+
+// Obtener el estado del servidor
+db.serverStatus();
+// Obtener estadísticas de la base de datos actual
+db.stats();
+
+// Listar todas las bases de datos
+show dbs;
+// Mostrar las estadísticas de una colección específica
+db.orders.stats();
+// Ver las operaciones en curso
+db.currentOp();
+
+// Matar una operación específica (reemplazar <opid> con el ID de la operación)
+db.killOp(<opid>);
+
+
+// Profiler
+// Consultar el estado actual del profiler
+db.getProfilingStatus();
+// Registrar operaciones que tarden más de 100 milisegundos
+db.setProfilingLevel(1, { slowms: 100 });
+// Registrar todas las operaciones
+db.setProfilingLevel(2);
+
+// Para consultar los registros más recientes, es habitual ordenarlos por la marca de tiempo:
+db.system.profile.find().sort({ ts: -1 }).limit(10);
+
+// Desactivar el profiler
+db.setProfilingLevel(0);
+
+
+
+
+
+
+
+
+
