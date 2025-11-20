@@ -133,8 +133,8 @@ db.productos.find()
 // Consultar productos cuyo nombre contenga la palabra "Mesa"
 db.productos.find({
     nombre: { $regex: /Mesa/ }
-})\
-// Consultar productos cuyo nombre comience con "teclado" (sin importar mayúsculas o minúsculas)
+})
+// Consultar productos cuyo nombre contenga "teclado" (sin importar mayúsculas o minúsculas)
 db.productos.find({
   nombre: { $regex: "teclado", $options: "i" }
 })
