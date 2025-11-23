@@ -245,3 +245,10 @@ db.departments.aggregate([
     }
   }
 ])
+
+// limpieza
+db.clients.drop()
+db.accounts.drop()
+db.departments.drop()
+db.getSiblingDB("demoBankLookup").dropDatabase()
+db.getSiblingDB("orgHierarchy").dropDatabase()
