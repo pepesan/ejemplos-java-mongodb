@@ -1,0 +1,207 @@
+use demoBank
+
+// Crear las colecciones necesarias para la base de datos de un banco
+db.createCollection("accounts")
+db.createCollection("transfers")
+
+// Transacción multi-documento
+
+// 1) Iniciar una sesión
+// Una sesión es un canal lógico entre el cliente y MongoDB que permite coordinar
+// operaciones que deben ser coherentes entre sí
+/*
+Las sesiones son la base de:
+
+- transacciones ACID,
+
+- causal consistency (lecturas ordenadas),
+
+- retryable writes,
+
+- multi-document transactions.
+*/
+session = db.getMongo().startSession()
+
+// 2) Seleccionar la BD dentro de la sesión
+accountsSession = session.getDatabase("demoBank")
+
+// 3) Iniciar la transacción
+session.startTransaction()
+
+// 4) Operaciones de carga inicial dentro de la transacción
+accountsSession.accounts.insertMany([
+  { _id: "ACC1001", owner: "Alice", balance: 1000, currency: "EUR" },
+  { _id: "ACC1002", owner: "Bob",   balance:  500, currency: "EUR" },
+  { _id: "ACC1003", owner: "Carol", balance: 2000, currency: "EUR" }
+])
+
+// 5) Confirmar (commit) la transacción
+session.commitTransaction()
+
+// 6) Cerrar la sesión
+session.endSession()
+
+
+// Transacción para transferir dinero entre cuentas
+// 1) Crear sesión
+session = db.getMongo().startSession()
+
+// 2) Seleccionar la BD en el contexto de la sesión
+bankSession = session.getDatabase("demoBank")
+
+// 3) Iniciar transacción
+session.startTransaction()
+
+try {
+
+  // === Operación 1: restar saldo de la cuenta origen ===
+  const withdraw = bankSession.accounts.updateOne(
+    { _id: "ACC1001", balance: { $gte: 200 } },   // Comprobamos que tiene saldo
+    { $inc: { balance: -200 } }
+  )
+
+  if (withdraw.matchedCount !== 1) {
+    throw new Error("No se pudo retirar: saldo insuficiente o cuenta origen no encontrada")
+  }
+
+  // === Operación 2: sumar saldo en la cuenta destino ===
+  const deposit = bankSession.accounts.updateOne(
+    { _id: "ACC1002" },
+    { $inc: { balance: +200 } }
+  )
+
+  if (deposit.matchedCount !== 1) {
+    throw new Error("No se pudo abonar: cuenta destino no encontrada")
+  }
+
+  // === Operación 3: registrar transferencia ===
+  bankSession.transfers.insertOne({
+    from: "ACC1001",
+    to: "ACC1002",
+    amount: 200,
+    currency: "EUR",
+    ts: new Date()
+  })
+
+  // === Confirmar transacción ===
+  session.commitTransaction()
+  print("Transferencia realizada correctamente")
+
+} catch (err) {
+
+  // Si algo falla, revertimos la transacción
+  print("ERROR:", err.message)
+  session.abortTransaction()
+
+} finally {
+  session.endSession()
+}
+
+// Transacción fallida (rollback por saldo insuficiente
+
+// 1) Crear sesión
+session = db.getMongo().startSession()
+
+// 2) BD dentro de la sesión
+bankSession = session.getDatabase("demoBank")
+
+// 3) Iniciar transacción
+session.startTransaction()
+
+
+try {
+
+  // Intentar transferir 10000 EUR desde ACC1001 a ACC1002
+  const amount = 10000
+
+  // ==== Paso 1: restar saldo de la cuenta origen con control de saldo ====
+  const withdraw = bankSession.accounts.updateOne(
+    { _id: "ACC1001", balance: { $gte: amount } },   // condición de saldo mínimo
+    { $inc: { balance: -amount } }
+  )
+
+  // Si no ha podido retirar, lanzamos error lógico
+  if (withdraw.matchedCount !== 1) {
+    throw new Error("Saldo insuficiente en ACC1001 para transferir " + amount + " EUR")
+  }
+
+  // ==== Paso 2: abonar en la cuenta destino ====
+  const deposit = bankSession.accounts.updateOne(
+    { _id: "ACC1002" },
+    { $inc: { balance: amount } }
+  )
+
+  if (deposit.matchedCount !== 1) {
+    throw new Error("Cuenta destino ACC1002 no encontrada")
+  }
+
+  // ==== Paso 3: registrar transferencia ====
+  bankSession.transfers.insertOne({
+    from: "ACC1001",
+    to:   "ACC1002",
+    amount: amount,
+    currency: "EUR",
+    ts: new Date()
+  })
+
+  // Si todo va bien, haríamos commit (pero en este ejemplo no llegaremos aquí)
+  session.commitTransaction()
+  print("Transferencia realizada correctamente")
+
+} catch (err) {
+
+  // Cualquier error → rollback completo
+  print("ERROR en la transacción:", err.message)
+  session.abortTransaction()
+
+} finally {
+  session.endSession()
+}
+
+// Ejemplo de escritura + lectura causalmente consistente
+// Sin causal consistency, si lees desde un secundario que todavía no se ha replicado, podrías ver un saldo viejo
+
+// 1) Crear sesión con causalConsistency: true
+session = db.getMongo().startSession({ causalConsistency: true })
+bankSession = session.getDatabase("demoBank")
+
+// 2) Escritura: ingreso en ACC1001
+bankSession.accounts.updateOne(
+  { _id: "ACC1001" },
+  { $inc: { balance: 50 } }
+)
+
+// 3) Lectura: queremos estar seguros de ver al menos ese ingreso
+const account = bankSession.accounts.findOne(
+  { _id: "ACC1001" }
+)
+
+printjson(account)
+
+// 4) Cerrar sesión
+session.endSession()
+
+// retryable writes
+// Si el cliente no sabe si la operación se llegó a ejecutar (por ejemplo, porque hubo un
+// fallo de red justo después de enviar la escritura), el driver puede repetirla de forma segura sin duplicarla
+
+// 1) Crear sesión con retryWrites habilitado
+session = db.getMongo().startSession({ retryWrites: true })
+
+// 2) DB dentro de la sesión
+bankSession = session.getDatabase("demoBank")
+
+// 3) Escritura que el servidor puede reintentar sin duplicar
+result = bankSession.accounts.updateOne(
+  { _id: "ACC1001" },
+  { $inc: { balance: 10 } }
+)
+
+printjson(result)
+
+// 4) Cerrar sesión
+session.endSession()
+
+
+// Limpieza: eliminar BD demoBank
+db.getSiblingDB("demoBank").dropDatabase()
