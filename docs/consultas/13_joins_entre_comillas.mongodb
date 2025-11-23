@@ -1,0 +1,247 @@
+// Modelo normalizado: referencias entre colecciones
+// Referencias: un documento guarda el _id (u otro campo) de otro documento, normalmente en otra colección
+
+use demoBankLookup
+
+// Creamos las colecciones
+db.createCollection("clients")
+db.createCollection("accounts")
+
+// Insertamos documentos en la colección clients
+db.clients.insertMany([
+  {
+    _id: "CLI001",
+    name: "Alice García",
+    email: "alice@example.com",
+    phone: "+34 600 111 111"
+  },
+  {
+    _id: "CLI002",
+    name: "Bob López",
+    email: "bob@example.com",
+    phone: "+34 600 222 222"
+  },
+  {
+    _id: "CLI003",
+    name: "Carol Martín",
+    email: "carol@example.com",
+    phone: "+34 600 333 333"
+  }
+])
+
+// Insertamos documentos en la colección accounts
+db.accounts.insertMany([
+  {
+    _id: "ACC1001",
+    clientId: "CLI001",
+    type: "checking",
+    balance: 1200,
+    currency: "EUR"
+  },
+  {
+    _id: "ACC1002",
+    clientId: "CLI001",
+    type: "savings",
+    balance: 5000,
+    currency: "EUR"
+  },
+  {
+    _id: "ACC2001",
+    clientId: "CLI002",
+    type: "checking",
+    balance: 300,
+    currency: "EUR"
+  },
+  {
+    _id: "ACC3001",
+    clientId: "CLI003",
+    type: "checking",
+    balance: 987,
+    currency: "EUR"
+  }
+])
+
+// $lookup básico: obtener cada cliente con sus cuentas
+
+db.clients.aggregate([
+  {
+    $lookup: {
+      from: "accounts",       // colección a unir
+      localField: "_id",      // campo en clients
+      foreignField: "clientId", // campo en accounts
+      as: "accounts"          // nombre del array de resultado
+    }
+  }
+])
+
+// $lookup con pipeline: solo cuentas checking por cliente
+
+db.clients.aggregate([
+  {
+    $lookup: {
+      from: "accounts",
+      let: { clientIdVar: "$_id" },   // variable con el _id del cliente
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: [ "$clientId", "$$clientIdVar" ] }, // join por clientId
+                { $eq: [ "$type", "checking" ] }           // solo cuentas checking
+              ]
+            }
+          }
+        }
+      ],
+      as: "checkingAccounts"
+    }
+  }
+])
+
+// $lookup con pipeline y proyección personalizada para mostrar solo ciertos campos
+
+db.clients.aggregate([
+  {
+    $lookup: {
+      from: "accounts",
+      let: { clientIdVar: "$_id" },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: [ "$clientId", "$$clientIdVar" ] },
+                { $eq: [ "$type", "checking" ] }
+              ]
+            }
+          }
+        }
+      ],
+      as: "checkingAccounts"
+    }
+  },
+  {
+    $project: {
+      _id: 0,               // ocultamos el _id del cliente si no lo queremos
+      clientId: "$_id",     // renombramos el _id del cliente a clientId
+      name: 1,
+      email: 1,
+      checkingAccounts: 1   // array de cuentas checking
+    }
+  }
+])
+
+// $lookup desde accounts hacia clients
+
+db.accounts.aggregate([
+  {
+    $lookup: {
+      from: "clients",       // colección con los clientes
+      localField: "clientId",// campo en accounts
+      foreignField: "_id",   // campo en clients
+      as: "client"           // array con el/los clientes encontrados
+    }
+  }
+])
+
+// $lookup desde accounts hacia clients + $unwind + $project para mostrar datos del cliente directamente
+db.accounts.aggregate([
+  {
+    $lookup: {
+      from: "clients",
+      localField: "clientId",
+      foreignField: "_id",
+      as: "client"
+    }
+  },
+  {
+    $unwind: "$client"  // convierte el array [ { ... } ] en un solo objeto { ... }
+  },
+  {
+    $project: {
+      _id: 0,                // ocultamos el _id de la cuenta si queremos
+      accountId: "$_id",     // renombramos el _id de la cuenta
+      type: 1,
+      balance: 1,
+      currency: 1,
+      clientId: 1,
+      clientName: "$client.name",
+      clientEmail: "$client.email",
+      clientPhone: "$client.phone"
+    }
+  }
+])
+
+
+// $graphLookup – joins recursivos (árboles, jerarquías, grafos)
+
+use orgHierarchy
+
+// Crear la colección departments
+db.createCollection("departments")
+
+// Insertar documentos en departments con estructura jerárquica
+db.departments.insertMany([
+  {
+    _id: "DEP_ROOT",
+    name: "Company",
+    parentId: null
+  },
+  {
+    _id: "DEP_IT",
+    name: "IT",
+    parentId: "DEP_ROOT"
+  },
+  {
+    _id: "DEP_HR",
+    name: "HR",
+    parentId: "DEP_ROOT"
+  },
+  {
+    _id: "DEP_BACKEND",
+    name: "Backend",
+    parentId: "DEP_IT"
+  },
+  {
+    _id: "DEP_FRONTEND",
+    name: "Frontend",
+    parentId: "DEP_IT"
+  },
+  {
+    _id: "DEP_RECRUIT",
+    name: "Recruiting",
+    parentId: "DEP_HR"
+  }
+])
+
+// $graphLookup: obtener todos los descendientes de un departamento
+db.departments.aggregate([
+  {
+    $match: { _id: "DEP_IT" }   // nodo de inicio: el departamento IT
+  },
+  {
+    $graphLookup: {
+      from: "departments",      // misma colección
+      startWith: "$_id",        // empezamos desde el _id del doc actual (DEP_IT)
+      connectFromField: "_id",  // desde este campo...
+      connectToField: "parentId", // ...seguimos a los que tengan parentId == _id
+      as: "descendants"         // array con todos los descendientes
+    }
+  }
+])
+
+// $graphLookup desde la raíz: toda la jerarquía de la empresa
+db.departments.aggregate([
+  {
+    $match: { _id: "DEP_ROOT" }
+  },
+  {
+    $graphLookup: {
+      from: "departments",
+      startWith: "$_id",          // DEP_ROOT
+      connectFromField: "_id",
+      connectToField: "parentId",
+      as: "allDepartments"
+    }
+  }
+])
