@@ -1,0 +1,100 @@
+// Ejemplo de consulta para medir el rendimiento de una base de datos MongoDB
+
+use perfDemo
+
+db.createCollection("orders")
+
+// Insertar muchos documentos en la colección orders
+use perfDemo
+
+db.orders.insertMany([
+  {
+    _id: 1,
+    customerId: "C001",
+    status: "PENDING",
+    total: 120,
+    items: [
+      { sku: "SKU001", qty: 2, price: 30 },
+      { sku: "SKU002", qty: 1, price: 60 }
+    ],
+    createdAt: ISODate("2025-01-10T10:00:00Z")
+  },
+  {
+    _id: 2,
+    customerId: "C002",
+    status: "PAID",
+    total: 75,
+    items: [
+      { sku: "SKU003", qty: 3, price: 25 }
+    ],
+    createdAt: ISODate("2025-01-11T09:30:00Z")
+  },
+  {
+    _id: 3,
+    customerId: "C001",
+    status: "PAID",
+    total: 300,
+    items: [
+      { sku: "SKU001", qty: 5, price: 30 },
+      { sku: "SKU004", qty: 1, price: 150 }
+    ],
+    createdAt: ISODate("2025-01-12T16:45:00Z")
+  },
+  {
+    _id: 4,
+    customerId: "C003",
+    status: "CANCELLED",
+    total: 40,
+    items: [
+      { sku: "SKU005", qty: 2, price: 20 }
+    ],
+    createdAt: ISODate("2025-01-13T12:10:00Z")
+  }
+])
+
+// Consulta para medir el rendimiento: buscar todas las órdenes de un cliente específico
+db.orders.find({ customerId: "C001" })
+
+// Explicación del plan de ejecución y estadísticas de rendimiento
+db.orders.find({ customerId: "C001" }).explain("executionStats")
+// verás algo tipo: "stage" : "COLLSCAN"
+
+// Crear un índice en customerId para mejorar el rendimiento de la consulta
+db.orders.createIndex({ customerId: 1 })
+
+// Volver a ejecutar la consulta para ver la mejora en el rendimiento
+db.orders.find({ customerId: "C001" }).explain("executionStats")
+// verás algo tipo: "stage" : "IXSCAN"
+// executionStats.totalDocsExamined: debería ser igual al número de documentos que cumplen la condición
+// executionStats.totalKeysExamined: te dice cuántas entradas del índice ha tenido que mirar
+
+// Consulta más compleja: buscar órdenes de un cliente específico con estado "PAID"
+db.orders.find({
+  customerId: "C001",
+  status: "PAID"
+}).explain("executionStats")
+
+// El plan usará el índice { customerId: 1 } (verás IXSCAN sobre ese índice)
+// Devolverá solo el documento con _id: 3 (es el único C001 con status: "PAID")
+// totalKeysExamined ≈ número de pedidos de C001
+// totalDocsExamined ≈ también 2
+// pero no está usando un índice para status
+
+// Crear un índice compuesto para customerId y status
+db.orders.createIndex({ customerId: 1, status: 1 })
+
+// Volver a ejecutar la consulta compleja para ver la mejora con el índice compuesto
+db.orders.find({
+  customerId: "C001",
+  status: "PAID"
+}).explain("executionStats")
+// El plan debería usar el índice compuesto { customerId: 1, status: 1 }
+// totalKeysExamined probablemente será 1
+// totalDocsExamined también muy bajo 1
+
+
+// Limpiar: eliminar el índice y la colección
+db.orders.dropIndex({ customerId: 1 })
+db.orders.drop()
+db.getSiblingDB("perfDemo").dropDatabase()
+
