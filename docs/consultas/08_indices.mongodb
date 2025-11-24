@@ -17,7 +17,7 @@ db.usuarios_demo.find({ ciudad: "Madrid" });
 db.usuarios_demo.getIndexes();
 
 
-// EJemplo de índice compuesto
+// Ejemplo de índice compuesto
 
 // Metemos datos en la colección "registros_ventas"
 db.registros_ventas.insertMany([
@@ -77,7 +77,10 @@ db.docs_busqueda.insertMany([
   { titulo: "Índices en MongoDB", cuerpo: "Mejoran el rendimiento de las consultas" }
 ]);
 // Crear un índice de texto en los campos "titulo" y "cuerpo"
-db.docs_busqueda.createIndex({ titulo: "text", cuerpo: "text" });
+db.docs_busqueda.createIndex(
+  { titulo: "text", cuerpo: "text" },
+  { default_language: "spanish" }
+);
 // consulta el índice creado
 db.docs_busqueda.getIndexes();
 // Realizar una búsqueda de texto para la palabra "MongoDB"
