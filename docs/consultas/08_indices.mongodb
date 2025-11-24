@@ -8,10 +8,16 @@ db.usuarios_demo.insertMany([
   { nombre: "Pedro", edad: 35, ciudad: "Sevilla" }
 ]);
 
+// Consulta sin índice en el campo "ciudad"
+db.usuarios_demo.find({ ciudad: "Madrid" });
+// Explicar el plan de consulta sin índice
+db.usuarios_demo.find({ ciudad: "Madrid" }).explain();
 // Crear un índice simple en el campo "ciudad"
 db.usuarios_demo.createIndex({ ciudad: 1 });
 // consulta el índice creado
 db.usuarios_demo.find({ ciudad: "Madrid" });
+// Explicar el plan de consulta con índice
+db.usuarios_demo.find({ ciudad: "Madrid" }).explain();
 
 // Consulta los índices existentes en la colección
 db.usuarios_demo.getIndexes();
