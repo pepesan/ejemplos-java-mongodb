@@ -1,3 +1,40 @@
+// Usamos como ejemplo la coleccion creada en el anterior snippet
+
+// Consulta implícita de igualdad
+db.clientes.find({
+  nombre: "Ana"
+})
+
+// Consulta explícita de igualdad
+db.clientes.find({
+  nombre: { $eq: "Ana" }
+})
+
+// Consulta de $in (valor en array)
+db.clientes.find({
+  nombre: { $in: ["Ana", "Carlos"] }
+})
+// Consulta de $gt (mayor que)
+db.clientes.find({
+  edad: { $gt: 30 }
+})
+
+// Consulta de $lt (menor que)
+db.clientes.find({
+  edad: { $lt: 30 }
+})
+
+// Consulta de $gte (mayor o igual que)
+db.clientes.find({
+  edad: { $gte: 30 }
+})
+
+// Consulta de $lte (menor o igual que)
+db.clientes.find({
+  edad: { $lte: 30 }
+})
+
+
 // Crea la coleccion "productos"
 db.productos.insertMany([
   { _id: ObjectId("66f100000000000000000001"), nombre: "Teclado",        categoria: "Tecnología", precio: 25.99, stock: 100 },
@@ -208,6 +245,11 @@ db.pedidos.updateMany(
     }
   }
 )
+// Actualizar todos los pedidos que contienen el producto "Ratón" para marcar el campo "enviado" como true
+db.pedidos.updateMany(
+  { "productos.nombre": "Ratón" },
+  { $set: { enviado: true } }
+)
 // Actualizar el pedido de "Marta" para cambiar las etiquetas a ["tienda", "recogida"]
 db.pedidos.updateOne(
   { cliente: "Marta" },
@@ -217,6 +259,16 @@ db.pedidos.updateOne(
 db.pedidos.find({
   productos: { $size: 2 }
 })
+
+// Eliminar el pedido con _id igual a "66f200000000000000000001"
+db.pedidos.deleteOne(
+  { _id: ObjectId("66f200000000000000000001") }
+)
+
+// Eliminar todos los pedidos del cliente "Marta"
+db.pedidos.deleteMany(
+  { cliente: "Marta" }
+)
 // Mostrar los documentos en la colección "pedidos" que contienen al menos un producto con precio mayor a 20 y cantidad mayor o igual a 2
 db.pedidos.find({
   "productos.precio":  { $gt: 20 },
