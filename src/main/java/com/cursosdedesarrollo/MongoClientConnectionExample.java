@@ -8,7 +8,10 @@ import com.mongodb.ServerApiVersion;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.connection.ConnectionPoolSettings;
 import org.bson.Document;
+
+import java.util.concurrent.TimeUnit;
 
 public class MongoClientConnectionExample {
     public static void main(String[] args) {
@@ -17,8 +20,17 @@ public class MongoClientConnectionExample {
         ServerApi serverApi = ServerApi.builder()
                 .version(ServerApiVersion.V1)
                 .build();
+        // Configuración del pool de conexiones
+        ConnectionPoolSettings poolSettings = ConnectionPoolSettings.builder()
+                .maxSize(50)                 // <-- maxPoolSize
+                .minSize(5)                  // opcional, recomendado
+                .maxWaitTime(10, TimeUnit.SECONDS)
+                .build();
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
+                .applyToConnectionPoolSettings(builder ->
+                        builder.applySettings(poolSettings)
+                )
                 .serverApi(serverApi)
                 .build();
         // Create a new client and connect to the server
