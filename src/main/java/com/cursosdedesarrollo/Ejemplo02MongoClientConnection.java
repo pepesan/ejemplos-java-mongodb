@@ -13,7 +13,7 @@ import org.bson.Document;
 
 import java.util.concurrent.TimeUnit;
 
-public class MongoClientConnectionExample {
+public class Ejemplo02MongoClientConnection {
     public static void main(String[] args) {
         // String connectionString = "mongodb+srv://<db_username>:<db_password>@cluster0.xxxx.mongodb.net/?appName=Cluster0";
         String connectionString = "mongodb://localhost:27017/admin?retryWrites=true&w=majority";

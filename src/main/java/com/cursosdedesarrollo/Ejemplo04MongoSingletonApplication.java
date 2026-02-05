@@ -5,11 +5,11 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
-public class MongoSingletonApplication {
+public class Ejemplo04MongoSingletonApplication {
 
     public static void main(String[] args) {
         try {
-            MongoClient mongoClient = MongoClientSingleton.getClient();
+            MongoClient mongoClient = Ejemplo03MongoClientSingleton.getClient();
 
             MongoDatabase database = mongoClient.getDatabase("admin");
             database.runCommand(new Document("ping", 1));

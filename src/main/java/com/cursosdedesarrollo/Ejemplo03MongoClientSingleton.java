@@ -8,7 +8,7 @@ import com.mongodb.ServerApiVersion;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
-public final class MongoClientSingleton {
+public final class Ejemplo03MongoClientSingleton {
 
     private static volatile MongoClient instance;
 
@@ -16,12 +16,12 @@ public final class MongoClientSingleton {
             "mongodb://localhost:27017/admin?retryWrites=true&w=majority";
 
     // Constructor privado: clave del patrón Singleton
-    private MongoClientSingleton() {
+    private Ejemplo03MongoClientSingleton() {
     }
 
     public static MongoClient getClient() {
         if (instance == null) {
-            synchronized (MongoClientSingleton.class) {
+            synchronized (Ejemplo03MongoClientSingleton.class) {
                 if (instance == null) {
                     instance = createClient();
                     registerShutdownHook();
