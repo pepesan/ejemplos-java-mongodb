@@ -70,6 +70,93 @@ db.zipcodes.aggregate( [
 { $match: { totalPop: { $gte: 70*1000 } } }
 ])
 
+
+
+db.ventas.insertMany([
+  {
+    fecha: ISODate("2026-01-10T10:00:00Z"),
+    cliente: "Ana",
+    items: [
+      { sku: "A1", cantidad: 2, precio: 19.99 },
+      { sku: "B2", cantidad: 1, precio: 5.5 }
+    ],
+    descuentoPct: 10
+  },
+  {
+    fecha: ISODate("2026-01-12T12:30:00Z"),
+    cliente: "Luis",
+    items: [
+      { sku: "A1", cantidad: 1, precio: 19.99 },
+      { sku: "C3", cantidad: 3, precio: 7.25 }
+    ],
+    descuentoPct: 0
+  },
+  {
+    fecha: ISODate("2026-01-15T09:20:00Z"),
+    cliente: "Ana",
+    items: [
+      { sku: "D4", cantidad: 5, precio: 2.0 }
+    ],
+    descuentoPct: 5
+  }
+]);
+
+// 2) Agregación usando una "función" ($function) para calcular el total
+db.ventas.aggregate([
+  {
+    $addFields: {
+      totalBruto: {
+        $function: {
+          lang: "js",
+          args: ["$items"],
+          body: function (items) {
+            // totalBruto = suma(cantidad * precio)
+            let total = 0;
+            for (const it of items) {
+              total += (it.cantidad || 0) * (it.precio || 0);
+            }
+            return total;
+          }
+        }
+      }
+    }
+  },
+  {
+    $addFields: {
+      totalNeto: {
+        $round: [
+          {
+            $multiply: [
+              "$totalBruto",
+              { $subtract: [1, { $divide: ["$descuentoPct", 100] }] }
+            ]
+          },
+          2
+        ]
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$cliente",
+      ventas: { $sum: 1 },
+      brutoAcumulado: { $sum: "$totalBruto" },
+      netoAcumulado: { $sum: "$totalNeto" },
+      ultimaCompra: { $max: "$fecha" }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      cliente: "$_id",
+      ventas: 1,
+      brutoAcumulado: { $round: ["$brutoAcumulado", 2] },
+      netoAcumulado: { $round: ["$netoAcumulado", 2] },
+      ultimaCompra: 1
+    }
+  },
+  { $sort: { netoAcumulado: -1 } }
+]);
 // Vistas
 
 // Creamos una colección "orders" con datos de ejemplo
