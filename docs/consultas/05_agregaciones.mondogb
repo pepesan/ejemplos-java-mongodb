@@ -1,3 +1,93 @@
+db.trades.insertMany([
+  { equity: "AAPL", price: 150, qty: 10 },
+  { equity: "AAPL", price: 155, qty: 5 },
+  { equity: "MSFT", price: 300, qty: 8 },
+  { equity: "GOOG", price: 2800, qty: 2 }
+])
+
+// Agregación para filtrar por equity "AAPL"
+db.trades.aggregate([
+  {
+    $match: { equity: "AAPL" }
+  }
+])
+
+
+// Agregación para calcular total de operaciones por equity
+db.trades.aggregate([
+  {
+    $group: {
+      _id: "$equity",
+      totalDocs: { $sum: 1 }
+    }
+  }
+])
+
+// Agregación para calcular el total de operaciones por equity con cantidad mayor o igual a 6
+db.trades.aggregate([
+  {
+    $match: { qty: { $gte: 6 } }
+  },
+  {
+    $group: {
+      _id: "$equity",
+      totalTrades: { $sum: 1 }
+    }
+  }
+])
+
+
+// Datos iniciales para la colección "users"
+db.users.insertMany([
+  { name: "Ana", age: 30, city: "Madrid" },
+  { name: "Luis", age: 25, city: "Barcelona" }
+])
+
+// Agregación para proyectar solo el nombre y la ciudad de los usuarios
+db.users.aggregate([
+  {
+    $project: {
+      name: 1,
+      city: 1,
+      _id: 0
+    }
+  }
+])
+
+
+// datos iniciales para la colección "trades"
+db.trades.insertMany([
+  { equity: "AAPL", price: 150, qty: 10 },
+  { equity: "MSFT", price: 300, qty: 5 }
+])
+
+// Agregación para calcular el importe total de cada operación (price * qty) y proyectar solo el equity y el importe
+db.trades.aggregate([
+  {
+    $project: {
+      equity: 1,
+      amount: { $multiply: ["$price", "$qty"] },
+      _id: 0
+    }
+  }
+])
+
+// Agregación para añadir un nuevo campo "amount" con el resultado de price * qty sin eliminar los campos originales
+db.trades.aggregate([
+  {
+    $set: {
+      amount: { $multiply: ["$price", "$qty"] }
+    }
+  }
+])
+
+// Agregación para contar el número total de operaciones en la colección "trades"
+db.trades.aggregate([
+  {
+    $count: "totalTrades"
+  }
+])
+
 # Ejemplo de inserción de documentos en una colección "zipcodes"
 db.zipcodes.insertMany([
   {

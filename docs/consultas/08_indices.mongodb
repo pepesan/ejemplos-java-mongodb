@@ -104,6 +104,45 @@ db.logs_temporales.createIndex(
   { expireAfterSeconds: 600 }
 );
 
+// índices compuestos para consultas complejas
+
+db.trades.insertMany([
+  { equity: "AAPL", sort: ISODate("2026-02-01T10:00:00Z"), range: 55, qty: 10 },
+  { equity: "AAPL", sort: ISODate("2026-02-01T10:01:00Z"), range: 72, qty: 15 },
+  { equity: "AAPL", sort: ISODate("2026-02-01T10:02:00Z"), range: 61, qty: 12 },
+  { equity: "AAPL", sort: ISODate("2026-02-01T10:03:00Z"), range: 49, qty:  9 },
+  { equity: "AAPL", sort: ISODate("2026-02-01T10:04:00Z"), range: 80, qty: 20 },
+
+  { equity: "MSFT", sort: ISODate("2026-02-01T10:00:30Z"), range: 60, qty: 11 },
+  { equity: "MSFT", sort: ISODate("2026-02-01T10:01:30Z"), range: 75, qty: 14 },
+  { equity: "MSFT", sort: ISODate("2026-02-01T10:02:30Z"), range: 52, qty:  8 }
+])
+
+
+// Consulta sin índice con SORT y COLLSCAN
+db.trades
+  .find({
+    equity: "AAPL",
+    range: { $gte: 50, $lt: 80 }
+  })
+  .sort({ sort: 1 })
+  .limit(20)
+  .explain("executionStats")
+
+// Aparece el COLLSCAN, lo que indica que se ha escaneado toda la colección
+
+// Crear un índice compuesto en los campos "equity", "sort" y "range"
+db.trades.createIndex({ equity: 1, sort: 1, range: 1 })
+
+// Consulta con índice (con lo limit, fetch e IXSCAN)
+db.trades
+  .find({
+    equity: "AAPL",
+    range: { $gte: 50, $lt: 80 }
+  })
+  .sort({ sort: 1 })
+  .limit(20)
+  .explain("executionStats")
 
 
 
