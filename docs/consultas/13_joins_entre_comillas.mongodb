@@ -1,7 +1,8 @@
 // Modelo normalizado: referencias entre colecciones
 // Referencias: un documento guarda el _id (u otro campo) de otro documento, normalmente en otra colección
 
-use demoBankLookup
+// use demoBankLookup
+use('demoBankLookup')
 
 // Creamos las colecciones
 db.createCollection("clients")
@@ -175,7 +176,8 @@ db.accounts.aggregate([
 
 // $graphLookup – joins recursivos (árboles, jerarquías, grafos)
 
-use orgHierarchy
+// use orgHierarchy
+use('orgHierarchy')
 
 // Crear la colección departments
 db.createCollection("departments")

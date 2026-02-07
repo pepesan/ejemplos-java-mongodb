@@ -1,11 +1,13 @@
 // Ejemplo de consulta para medir el rendimiento de una base de datos MongoDB
 
-use perfDemo
+// use perfDemo
+use('perfDemo')
 
 db.createCollection("orders")
 
 // Insertar muchos documentos en la colección orders
-use perfDemo
+// use perfDemo
+use('perfDemo')
 
 db.orders.insertMany([
   {

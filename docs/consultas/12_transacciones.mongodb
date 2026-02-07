@@ -1,4 +1,5 @@
-use demoBank
+// use demoBank
+use('demoBank')
 
 // Crear las colecciones necesarias para la base de datos de un banco
 db.createCollection("accounts")

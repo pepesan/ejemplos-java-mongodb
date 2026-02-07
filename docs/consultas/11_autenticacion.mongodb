@@ -1,15 +1,18 @@
 // Autenticación en MongoDB
 // Iniciar un contenedor de MongoDB sin autenticación
+/*
 docker run -d \
   --name mongo-noauth \
   -p 27017:27017 \
   -v ./data:/data/db \
   mongo:8
+*/
 // Conectarse al contenedor de MongoDB
-docker exec -it mongo-noauth mongosh
+// docker exec -it mongo-noauth mongosh
 
 // Crear un usuario administrador con rol de root
-use admin
+// use admin
+use('admin')
 db.createUser({
   user: "admin",
   pwd: "password",
@@ -18,24 +21,28 @@ db.createUser({
 // Salir de la shell de MongoDB
 exit
 // Detener y eliminar el contenedor sin autenticación
-docker stop mongo-noauth
-docker rm mongo-noauth
+// docker stop mongo-noauth
+// docker rm mongo-noauth
 // Iniciar un contenedor de MongoDB con autenticación habilitada
+/*
 docker run -d \
     --name mongo-auth \
     -p 27017:27017 \
     -v ./data:/data/db \
     mongo:8 \
     --auth
+*/
 // Conectarse al contenedor de MongoDB con autenticación
-mongosh "mongodb://admin:password@localhost:27017/admin"
+// mongosh "mongodb://admin:password@localhost:27017/admin"
 
 // Gestión de usuarios en MongoDB
 // Listar usuarios en la base de datos actual
-use admin
+// use admin
+use('admin')
 db.getUsers();
 // Crear un usuario con rol de lectura y escritura en una base de datos específica
-use mydatabase
+// use mydatabase
+use('mydatabase')
 db.createUser
 ({
   user:

@@ -141,7 +141,7 @@ db.zipcodes.insertMany([
   }
 ])
 
-# Ejemplo de agregación para calcular la población total por estado
+// Ejemplo de agregación para calcular la población total por estado
 db.zipcodes.aggregate([
     {
         $group: {
@@ -154,7 +154,7 @@ db.zipcodes.aggregate([
     }
 ])
 
-# Ejemplo de agregación para encontrar estados con población mayor a 70 mil
+// Ejemplo de agregación para encontrar estados con población mayor a 70 mil
 db.zipcodes.aggregate( [
   { $group: { _id: "$state", totalPop:  { $sum:"$pop" } } },
 { $match: { totalPop: { $gte: 70*1000 } } }
