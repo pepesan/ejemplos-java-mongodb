@@ -1,0 +1,577 @@
+// 1. seleccionar la base de datos
+use curso_java
+
+// 2. crear la colección productos
+db.createCollection("productos")
+
+// 3. insertar documentos de ejemplo
+db.productos.insertMany([
+  {
+    nombre: "Monitor 24 pulgadas",
+    descripcion: "Monitor Full HD con panel IPS",
+    categoria: "Pantallas",
+    precio: 140,
+    tags: ["monitor", "full hd", "ips"]
+  },
+  {
+    nombre: "Teclado mecánico",
+    descripcion: "Teclado mecánico con retroiluminación RGB",
+    categoria: "Perifericos",
+    precio: 90,
+    tags: ["teclado", "mecanico", "rgb"]
+  },
+  {
+    nombre: "Ratón inalámbrico",
+    descripcion: "Ratón inalámbrico con sensor óptico",
+    categoria: "Perifericos",
+    precio: 35,
+    tags: ["raton", "inalambrico"]
+  }
+])
+
+// 4. mostrar los documentos insertados
+db.productos.find().pretty()
+
+// 5. crear un índice de búsqueda en el campo descripción
+db.productos.createSearchIndex(
+    "desc_index",
+    {
+        "mappings": {
+            "fields": {
+                "descripcion": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+)
+
+// 6. mostrar los índices de búsqueda disponibles
+db.productos.getSearchIndexes()
+
+// 7. borrar un índice de búsqueda
+db.productos.dropSearchIndex("desc_index")
+
+// 8. realizar una consulta de búsqueda utilizando el índice creado
+db.productos.aggregate([
+  {
+    $search: {
+      index: "desc_index",
+      text: {
+        query: "IPS",
+        path: "descripcion"
+      }
+    }
+  }
+])
+\
+// 9. limitar el número de resultados y proyectar campos específicos junto con el score de búsqueda
+db.productos.aggregate([
+  {
+    $search: {
+      index: "desc_index",
+      text: {
+        query: "IPS",
+        path: "descripcion"
+      }
+    }
+  },
+  {
+    // Limita el número de documentos devueltos
+    $limit: 2
+  },
+  {
+    // Proyecta los campos deseados y el score de Atlas Search
+    $project: {
+      _id: 0,
+      nombre: 1,
+      descripcion: 1,
+      categoria: 1,
+      precio: 1,
+      score: { $meta: "searchScore" }
+    }
+  }
+])
+
+// 10. obtener el número total de resultados que coinciden con la consulta de búsqueda
+db.productos.aggregate([
+  {
+    $searchMeta: {
+      index: "desc_index",
+      count: {
+        type: "total"
+      },
+      text: {
+        query: "IPS",
+        path: "descripcion"
+      }
+    }
+  }
+])
+
+/*
+Posible salida
+{ count: { total: Long('1') } }
+*/
+
+// 11. defininición de un índice de búsqueda con mapping dinámico
+db.productos.createSearchIndex(
+    "dynamic_index",
+    {
+        "mappings": {
+            "dynamic": true
+        }
+    }
+)
+// 12. definición de un índice de búsqueda con mapping estático
+db.productos.createSearchIndex(
+  "desc_nombre_index",
+  {
+    mappings: {
+      dynamic: false,
+      fields: {
+        descripcion: {
+          type: "string"
+        },
+        nombre: {
+          type: "string"
+        }
+      }
+    }
+  }
+)
+
+// 13. insertar documentos con más atributos
+db.catalogo.insertMany([
+  {
+    nombre: "Portátil profesional",
+    categoria: "Ordenadores",
+    precio: 1200,
+    tags: ["portatil", "profesional", "intel", "ssd"],
+    proveedor: {
+      nombre: "TechSupplier",
+      pais: "España",
+      prioridad: "alta"
+    },
+    atributos: [
+      { clave: "cpu", valor: "Intel i7" },
+      { clave: "ram", valor: "32GB" },
+      { clave: "almacenamiento", valor: "1TB SSD" }
+    ]
+  },
+  {
+    nombre: "Portátil ligero",
+    categoria: "Ordenadores",
+    precio: 900,
+    tags: ["portatil", "ligero", "intel"],
+    proveedor: {
+      nombre: "GlobalDevices",
+      pais: "Alemania",
+      prioridad: "media"
+    },
+    atributos: [
+      { clave: "cpu", valor: "Intel i5" },
+      { clave: "ram", valor: "16GB" },
+      { clave: "almacenamiento", valor: "512GB SSD" }
+    ]
+  },
+  {
+    nombre: "Servidor rack",
+    categoria: "Servidores",
+    precio: 3500,
+    tags: ["servidor", "rack", "amd", "empresarial"],
+    proveedor: {
+      nombre: "EnterpriseHW",
+      pais: "Estados Unidos",
+      prioridad: "alta"
+    },
+    atributos: [
+      { clave: "cpu", valor: "AMD EPYC" },
+      { clave: "ram", valor: "128GB" },
+      { clave: "almacenamiento", valor: "4TB NVMe" }
+    ]
+  },
+  {
+    nombre: "PC sobremesa gaming",
+    categoria: "Ordenadores",
+    precio: 1800,
+    tags: ["gaming", "pc", "amd", "nvidia"],
+    proveedor: {
+      nombre: "GamingWorld",
+      pais: "China",
+      prioridad: "media"
+    },
+    atributos: [
+      { clave: "cpu", valor: "AMD Ryzen 9" },
+      { clave: "ram", valor: "64GB" },
+      { clave: "gpu", valor: "RTX 4080" }
+    ]
+  },
+  {
+    nombre: "Mini PC",
+    categoria: "Ordenadores",
+    precio: 650,
+    tags: ["mini", "pc", "compacto", "intel"],
+    proveedor: {
+      nombre: "MiniTech",
+      pais: "Japón",
+      prioridad: "baja"
+    },
+    atributos: [
+      { clave: "cpu", valor: "Intel i3" },
+      { clave: "ram", valor: "8GB" },
+      { clave: "almacenamiento", valor: "256GB SSD" }
+    ]
+  }
+])
+
+
+
+// 14. definición de un índice de búsqueda con mapping mixto (estático + dinámico)
+db.catalogo.createSearchIndex(
+  "catalogo_index",
+  {
+    mappings: {
+      // A nivel raíz no se indexa nada automáticamente
+      dynamic: false,
+      fields: {
+        // Campo simple indexado de forma estática
+        nombre: {
+          type: "string"
+        },
+
+        // Array de objetos indexado de forma dinámica
+        atributos: {
+          type: "document",
+          dynamic: true
+        }
+      }
+    }
+  }
+)
+// 15. mostrar los índices de búsqueda disponibles
+db.productos.getSearchIndexes()
+
+// 16. indice con campo de array de strings
+db.productos.createSearchIndex(
+  "tags_index",
+  {
+    mappings: {
+      fields: {
+        tags: {
+          type: "string"
+        }
+      }
+    }
+  }
+)
+
+// 17. mostrar los índices de búsqueda disponibles
+db.productos.getSearchIndexes()
+// 18. borrar el índice de búsqueda creado para el campo tags
+db.productos.dropSearchIndex("tags_index")
+
+
+// 19. definición de un índice de búsqueda con mapping estático para un campo anidado
+db.catalogo.createSearchIndex(
+  "proveedor_nombre_index",
+  {
+    mappings: {
+      dynamic: false,
+      fields: {
+        proveedor: {
+          type: "document",
+          dynamic: false,
+          fields: {
+            nombre: {
+              type: "string"
+            }
+          }
+        }
+      }
+    }
+  }
+)
+
+// 20. mostrar los índices de búsqueda disponibles
+db.catalogo.getSearchIndexes()
+// 21. borrar el índice de búsqueda creado para el campo proveedor.nombre
+db.catalogo.dropSearchIndex("proveedor_nombre_index")
+
+// 22. definición de un índice de búsqueda con mapping estático para un campo de array de subdocumentos
+db.catalogo.createSearchIndex(
+  "atributos_valor_index",
+  {
+    mappings: {
+      // A nivel raíz no se indexa nada automáticamente
+      dynamic: false,
+      fields: {
+        atributos: {
+          // Array de subdocumentos
+          type: "embeddedDocuments",
+          // Desactivamos indexación dinámica
+          dynamic: false,
+          fields: {
+            // ÚNICO campo indexado dentro de cada subdocumento
+            valor: {
+              type: "string"
+            }
+          }
+        }
+      }
+    }
+  }
+)
+
+// 23. mostrar los índices de búsqueda disponibles
+db.catalogo.getSearchIndexes()
+// 24. borrar el índice de búsqueda creado para el campo atributos.valor
+db.catalogo.dropSearchIndex("atributos_valor_index")
+// 25. crea un índice de búsqueda con mapping estatico para un campo con varios tipos de datos
+db.productos.createSearchIndex(
+  "multi_tipo_index",
+  {
+    mappings: {
+      dynamic: false,
+      fields: {
+        precio: [
+            {
+                type: "number"
+            },
+            {
+                type: "string"
+            }
+        ]
+      }
+    }
+  }
+)
+// 26. mostrar los índices de búsqueda disponibles
+db.productos.getSearchIndexes()
+// 27. borrar el índice de búsqueda creado para el campo precio con varios tipos de datos
+db.productos.dropSearchIndex("multi_tipo_index")
+
+// 28. realizar una consulta de búsqueda utilizando el índice creado para el campo descripcion
+db.productos.aggregate([
+  {
+    $search: {
+      index: "desc_index",
+      text: {
+        query: "IPS",
+        path: "descripcion"
+      }
+    }
+  }
+])
+//  29. realizar una consulta de búsqueda utilizando el índice creado para el campo descripcion con búsqueda difusa
+// por si el usuario comete errores tipográficos al escribir "IPS" como "IPZ"
+db.productos.aggregate([
+  {
+    $search: {
+      index: "desc_index",
+      text: {
+        query: "IPS",
+        path: "descripcion",
+        fuzzy: {}
+      }
+    }
+  }
+])
+
+// 30. nueva colección para probar índices de búsqueda con campos numéricos
+db.reservas.insertMany([
+  {
+    codigo: "R-2001",
+    estado: "confirmada",
+    cliente: "Ana",
+    importe: 120,
+    activa: true
+  },
+  {
+    codigo: "R-2002",
+    estado: "pendiente",
+    cliente: "Luis",
+    importe: 80,
+    activa: true
+  },
+  {
+    codigo: "R-2003",
+    estado: "cancelada",
+    cliente: "Marta",
+    importe: 200,
+    activa: false
+  },
+  {
+    codigo: "R-2004",
+    estado: "confirmada",
+    cliente: "Carlos",
+    importe: 150,
+    activa: true
+  },
+  {
+    codigo: "R-2005",
+    estado: "pendiente",
+    cliente: "Lucía",
+    importe: 95,
+    activa: false
+  }
+])
+
+
+// 31. definición de un índice de búsqueda con mapping estático para un campo numérico
+db.reservas.createSearchIndex(
+  "importe_index",
+  {
+    mappings: {
+      dynamic: false,
+      fields: {
+        importe: {
+          type: "number"
+        }
+      }
+    }
+  }
+)
+
+// 32. mostrar los índices de búsqueda disponibles
+db.reservas.getSearchIndexes()
+
+
+// 33. buscar reservas con importe exactamente igual a 120 utilizando el índice de búsqueda creado para el campo importe
+db.reservas.aggregate([
+  {
+    $search: {
+      index: "importe_index",
+      equals: {
+        path: "importe",
+        value: 120
+      }
+    }
+  }
+])
+
+// 34. buscar reservas con importe entre 100 y 50 de margen utilizando el índice de búsqueda creado para el campo importe
+db.reservas.aggregate([
+  {
+    $search: {
+      index: "importe_index",
+      near: {
+        path: "importe",
+        origin: 100,
+        pivot: 50
+      }
+    }
+  }
+])
+
+// 35. buscar reservas con importe entre 90 y 150 utilizando el índice de búsqueda creado para el campo importe
+db.reservas.aggregate([
+  {
+    $search: {
+      index: "importe_index",
+      range: {
+        path: "importe",
+        gte: 90,
+        lte: 150
+      }
+    }
+  }
+])
+
+// 46. borrar el índice de búsqueda creado para el campo importe
+db.reservas.dropSearchIndex("importe_index")
+
+
+
+
+// 47. Inserta publicaciones con fecha y tags (array de strings)
+db.posts.insertMany([
+  {
+    title: "Introducción a MongoDB Atlas Search",
+    publishedAt: ISODate("2025-01-10T10:00:00Z"),
+    tags: ["mongodb", "atlas", "search"]
+  },
+  {
+    title: "Facets en Atlas Search: fundamentos",
+    publishedAt: ISODate("2025-02-05T12:30:00Z"),
+    tags: ["mongodb", "atlas-search", "facets"]
+  },
+  {
+    title: "Búsqueda por relevancia y scoring",
+    publishedAt: ISODate("2025-02-20T09:15:00Z"),
+    tags: ["atlas-search", "relevance", "search"]
+  },
+  {
+    title: "Buenas prácticas de indexación",
+    publishedAt: ISODate("2025-03-02T16:45:00Z"),
+    tags: ["mongodb", "indexing", "performance"]
+  },
+  {
+    title: "Rangos de fechas en consultas",
+    publishedAt: ISODate("2025-03-18T08:00:00Z"),
+    tags: ["dates", "atlas-search", "mongodb"]
+  },
+  {
+    title: "Optimización de consultas agregadas",
+    publishedAt: ISODate("2025-04-01T14:20:00Z"),
+    tags: ["performance", "aggregation", "mongodb"]
+  }
+]);
+
+// 48. definición de un índice de búsqueda con mapping estático para campos de fecha y array de strings
+db.posts.createSearchIndex(
+  "posts_search",
+  {
+    mappings: {
+      dynamic: false,
+      fields: {
+        publishedAt: {
+          type: "date"
+        },
+        tags: {
+          type: "stringFacet"
+        },
+        title: {
+          type: "string"
+        }
+      }
+    }
+  }
+);
+
+
+// 49. consulta de búsqueda con facet para obtener el número total de publicaciones que tienen tags y un facet con los tags más comunes
+
+db.posts.aggregate([
+  {
+    $searchMeta: {
+      index: "posts_search",
+      facet: {
+        operator: {
+          exists: { path: "tags" }
+        },
+        facets: {
+          tagsFacet: {
+            type: "string",
+            path: "tags",
+            numBuckets: 2
+          }
+        }
+      }
+    }
+  }
+]);
+
+// 50. borra el índice de búsqueda creado para la colección posts
+db.posts.dropSearchIndex("posts_search")
+
+
+
+
+
+
+
+
+
+
+
