@@ -97,7 +97,7 @@ try {
   session.endSession()
 }
 
-// Transacción fallida (rollback por saldo insuficiente
+// Transacción fallida (rollback por saldo insuficiente)
 
 // 1) Crear sesión
 session = db.getMongo().startSession()
