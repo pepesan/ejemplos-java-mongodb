@@ -39,3 +39,6 @@ db.clientes.deleteMany({ edad: { $gt: 40 } })
 
 // Borrar toda la coleccion
 db.clientes.drop()
+
+// Verificar que la coleccion esta vacia
+db.clientes.find()

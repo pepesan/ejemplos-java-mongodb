@@ -1,0 +1,30 @@
+const fs = require('fs');
+// 1. Seleccionar la base de datos
+use('mi_base_datos');
+
+// 2. Crear la colección (si no existe)
+db.createCollection('usuarios');
+
+// 3. Insertar algunos documentos de ejemplo
+db.usuarios.insertMany([
+  { nombre: "Ana", edad: 30, activo: true },
+  { nombre: "Luis", edad: 25, activo: false },
+  { nombre: "Marta", edad: 35, activo: true }
+]);
+
+// 4. Ejecutar una consulta
+const resultados = db.usuarios.find(
+  { activo: true },
+  { _id: 0, nombre: 1, edad: 1 }
+).toArray();
+
+// 5. Guardar los resultados a disco
+// IMPORTANTE: la ruta es relativa al entorno donde se ejecuta VS Code
+fs.writeFileSync(
+  'resultado_consulta.json',
+  JSON.stringify(resultados, null, 2),
+  'utf8'
+);
+
+// Mostrar por consola del Playground
+resultados;
