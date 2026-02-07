@@ -2,7 +2,8 @@
 db.createCollection("productos")
 
 // Lista las colecciones en la base de datos actual
-show collections
+// show collections
+db.getCollectionNames()
 
 // Borra la coleccion "productos"
 db.productos.drop()

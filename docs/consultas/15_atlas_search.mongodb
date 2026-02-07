@@ -1,5 +1,6 @@
 // 1. seleccionar la base de datos
-use curso_java
+// use curso_java
+use('curso_java')
 
 // 2. crear la colección productos
 db.createCollection("productos")
@@ -64,7 +65,7 @@ db.productos.aggregate([
     }
   }
 ])
-\
+
 // 9. limitar el número de resultados y proyectar campos específicos junto con el score de búsqueda
 db.productos.aggregate([
   {

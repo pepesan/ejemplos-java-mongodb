@@ -6,14 +6,15 @@ db.serverStatus();
 db.stats();
 
 // Listar todas las bases de datos
-show dbs;
+// show dbs;
+db.getMongo().getDBs();
 // Mostrar las estadísticas de una colección específica
 db.orders.stats();
 // Ver las operaciones en curso
 db.currentOp();
 
 // Matar una operación específica (reemplazar <opid> con el ID de la operación)
-db.killOp(<opid>);
+// db.killOp(<opid>);
 
 
 // Profiler

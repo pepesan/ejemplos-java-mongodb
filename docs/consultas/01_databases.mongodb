@@ -1,13 +1,16 @@
 // seleccionar (o crear) la base de datos
-use miBaseDeDatos
+// use miBaseDeDatos
+use('miBaseDeDatos')
 
 // mostrar la base de datos actual
 db
 
 // mostrar las bases de datos existentes
-show dbs
+// show dbs
+db.getMongo().getDBs()
 
 
 // borrado de una base de datos
-use miBaseDeDatos
+// use miBaseDeDatos
+use('miBaseDeDatos')
 db.dropDatabase()

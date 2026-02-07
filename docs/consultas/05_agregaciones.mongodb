@@ -88,7 +88,7 @@ db.trades.aggregate([
   }
 ])
 
-# Ejemplo de inserción de documentos en una colección "zipcodes"
+// Ejemplo de inserción de documentos en una colección "zipcodes"
 db.zipcodes.insertMany([
   {
     _id: "10280",

@@ -388,12 +388,4 @@ db.vehiculos.countDocuments()
 // Contar cuántos vehículos tienen un precio mayor a 15000
 db.vehiculos.countDocuments({
     precio: { $gt: 15000 }
-}
-
-
-
-
-
-
-
-
+})
