@@ -15,6 +15,7 @@ public class Ejemplo10Transaccion {
 
     public static void main(String[] args) {
 
+        // Esto sólo debería funcionar en un entorno de MongoDB con replica set o cluster (no en un servidor standalone)
         MongoClient mongoClient = Ejemplo03MongoClientSingleton.getClient();
         MongoDatabase database = mongoClient.getDatabase("curso_java");
         MongoCollection<Document> cuentas =
