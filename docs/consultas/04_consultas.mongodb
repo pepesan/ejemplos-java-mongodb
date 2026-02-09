@@ -255,6 +255,18 @@ db.pedidos.updateOne(
   { cliente: "Marta" },
   { $set: { etiquetas: ["tienda", "recogida"] } }
 )
+
+db.pedidos.updateOne(
+  { _id: ObjectId("66f200000000000000000001") },
+  {
+    $set: {
+      cliente: "Ana Gómez",
+      estado: "preparación",
+      etiquetas: ["online", "envío"],
+      "productos.0.precio": 27.99
+    }
+  }
+)
 // Mostrar los documentos en la colección "pedidos" que tienen exactamente 2 productos
 db.pedidos.find({
   productos: { $size: 2 }
