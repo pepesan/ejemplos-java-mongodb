@@ -92,7 +92,8 @@ public class Ejemplo07Consultas {
                 collection.find(
                         and(
                                 eq("activo", true),
-                                gte("edad", 30)
+                                gte("edad", 30),
+                                lte("edad", 40)
                         )
                 ).iterator();
 
