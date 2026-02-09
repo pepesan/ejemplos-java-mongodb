@@ -21,18 +21,18 @@ public class Ejemplo10Transaccion {
         MongoCollection<Document> cuentas =
                 database.getCollection("cuentas_bancarias_tx");
 
+        // Limpiar colección (para pruebas repetibles)
+        cuentas.drop();
         // Datos iniciales (idempotentes)
-        cuentas.updateOne(
-                eq("cuenta", "A"),
-                new Document("$setOnInsert",
-                        new Document("cuenta", "A").append("saldo", 1000)),
-                new com.mongodb.client.model.UpdateOptions().upsert(true)
+        cuentas.insertOne(
+                        new Document("cuenta", "A")
+                                .append("saldo", 1000)
+                        .append("_id", "001")
         );
-        cuentas.updateOne(
-                eq("cuenta", "B"),
-                new Document("$setOnInsert",
-                        new Document("cuenta", "B").append("saldo", 300)),
-                new com.mongodb.client.model.UpdateOptions().upsert(true)
+        cuentas.insertOne(
+                new Document("cuenta", "B")
+                        .append("saldo", 300)
+                        .append("_id", "002")
         );
 
         ClientSession session = mongoClient.startSession();
@@ -41,13 +41,13 @@ public class Ejemplo10Transaccion {
 
             TransactionBody<Void> transferencia = () -> {
 
-                Document origen = cuentas.find(session, eq("cuenta", "A")).first();
+                Document origen = cuentas.find(session, eq("_id", "001")).first();
                 if (origen.getInteger("saldo") < 200) {
                     throw new RuntimeException("Saldo insuficiente");
                 }
 
-                cuentas.updateOne(session, eq("cuenta", "A"), inc("saldo", -200));
-                cuentas.updateOne(session, eq("cuenta", "B"), inc("saldo", 200));
+                cuentas.updateOne(session, eq("_id", "001"), inc("saldo", -200));
+                cuentas.updateOne(session, eq("_id", "002"), inc("saldo", 200));
 
                 return null;
             };
