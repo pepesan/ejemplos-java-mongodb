@@ -139,5 +139,41 @@ db.pedidosClientes.aggregate([
 ])
 
 
-
+db.usuarios.bulkWrite([
+  {
+    insertOne: {
+      document: {
+        nombre: "Ana",
+        edad: 30,
+        activo: true
+      }
+    }
+  },
+  {
+    insertOne: {
+      document: {
+        nombre: "Luis",
+        edad: 25,
+        activo: false
+      }
+    }
+  },
+  {
+    updateOne: {
+      filter: { nombre: "Ana" },
+      update: { $set: { edad: 31 } }
+    }
+  },
+  {
+    updateMany: {
+      filter: { activo: false },
+      update: { $set: { revisado: true } }
+    }
+  },
+  {
+    deleteOne: {
+      filter: { nombre: "Luis" }
+    }
+  }
+])
 
