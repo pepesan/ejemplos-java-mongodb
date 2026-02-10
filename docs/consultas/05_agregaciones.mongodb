@@ -524,5 +524,51 @@ db.pedidosClientes.aggregate([
   }
 ])
 
+// Agregación para mostrar el total gastado por cada cliente
+// Insertamos datos de ejemplo en las colecciones "clientes" y "pedidos"
+db.clientes.insertMany([
+  { _id: 1, nombre: "Ana", ciudad: "Madrid" },
+  { _id: 2, nombre: "Luis", ciudad: "Barcelona" },
+  { _id: 3, nombre: "Marta", ciudad: "Valencia" }
+])
+
+
+
+db.pedidos.insertMany([
+  { _id: 101, clienteId: 1, producto: "Portátil", total: 1200 },
+  { _id: 102, clienteId: 1, producto: "Ratón", total: 25 },
+  { _id: 103, clienteId: 2, producto: "Monitor", total: 300 }
+])
+
+// Agregación para mostrar el total gastado por cada cliente
+db.clientes.aggregate([
+  {
+    $lookup: {
+      from: "pedidos",
+      localField: "_id",
+      foreignField: "clienteId",
+      as: "pedidos"
+    }
+  }
+])
+// Agregación para mostrar el total gastado por cada cliente, incluyendo clientes sin pedidos
+db.clientes.aggregate([
+  {
+    $lookup: {
+      from: "pedidos",
+      localField: "_id",
+      foreignField: "clienteId",
+      as: "pedido"
+    }
+  },
+  {
+    $unwind: {
+      path: "$pedido",
+      preserveNullAndEmptyArrays: true
+    }
+  }
+])
+
+
 
 
