@@ -394,3 +394,74 @@ db.dailySales.find(
   { _id: 0, date: 1, ordersCount: 1 }
 );
 
+// Metemos datos de ejemplo en la colección "pedidos"
+db.pedidos.insertMany([
+  {
+    _id: 1,
+    cliente: "Ana",
+    fecha: ISODate("2025-01-10"),
+    productos: [
+      { nombre: "Teclado", precio: 30, cantidad: 1 },
+      { nombre: "Ratón", precio: 15, cantidad: 2 }
+    ]
+  },
+  {
+    _id: 2,
+    cliente: "Luis",
+    fecha: ISODate("2025-01-11"),
+    productos: [
+      { nombre: "Monitor", precio: 200, cantidad: 1 }
+    ]
+  },
+  {
+    _id: 3,
+    cliente: "Ana",
+    fecha: ISODate("2025-01-12"),
+    productos: [
+      { nombre: "Ratón", precio: 15, cantidad: 1 },
+      { nombre: "Alfombrilla", precio: 10, cantidad: 1 }
+    ]
+  }
+])
+
+// Agregación para descomponer el array de productos y mostrar cada producto en una fila separada
+db.pedidos.aggregate([
+  {
+    $unwind: "$productos"
+  },
+  {
+    $project: {
+      _id: 0,
+      cliente: 1,
+      producto: "$productos.nombre",
+      precio: "$productos.precio"
+    }
+  }
+])
+
+// Agregación para calcular el total gastado por cada cliente
+db.pedidos.aggregate([
+  {
+    $unwind: "$productos"
+  },
+  {
+    $project: {
+      cliente: 1,
+      totalProducto: {
+        $multiply: [
+          "$productos.precio",
+          "$productos.cantidad"
+        ]
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$cliente",
+      totalGastado: { $sum: "$totalProducto" }
+    }
+  }
+])
+
+
+

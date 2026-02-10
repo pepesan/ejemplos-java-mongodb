@@ -50,6 +50,9 @@ db.catalogo_etiquetas.createIndex({ tags: 1 });
 // consulta el índice creado
 db.catalogo_etiquetas.find({ tags: "backend" });
 
+// Explicar el plan de consulta para la búsqueda en el array
+db.catalogo_etiquetas.find({ tags: "backend" }).explain();
+
 // Índices geoespaciales
 // Metemos datos en la colección "puntos_interes"
 db.puntos_interes.insertMany([
