@@ -569,6 +569,49 @@ db.clientes.aggregate([
   }
 ])
 
+// datos de ejemplo para la colección "usuarios"
+db.usuarios.insertMany([
+  { nombre: "Ana", edad: 25, ciudad: "Madrid" },
+  { nombre: "Luis", edad: 32, ciudad: "Barcelona" },
+  { nombre: "Marta", edad: 29, ciudad: "Valencia" },
+  { nombre: "Carlos", edad: 41, ciudad: "Sevilla" },
+  { nombre: "Lucía", edad: 35, ciudad: "Bilbao" },
+  { nombre: "Jorge", edad: 22, ciudad: "Madrid" }
+])
+// Agregación para seleccionar 2 usuarios al azar
+db.usuarios.aggregate([
+  { $sample: { size: 2 } }
+])
+
+// metemos datos de ejemplo en la colección "empleados" para mostrar el uso de $graphLookup
+db.empleados.insertMany([
+  { _id: 1, nombre: "Ana", managerId: null },
+  { _id: 2, nombre: "Luis", managerId: 1 },
+  { _id: 3, nombre: "Marta", managerId: 1 },
+  { _id: 4, nombre: "Carlos", managerId: 2 },
+  { _id: 5, nombre: "Lucía", managerId: 2 },
+  { _id: 6, nombre: "Jorge", managerId: 4 }
+])
+
+// Agregación para mostrar la jerarquía de empleados y sus subordinados
+db.empleados.aggregate([
+  {
+    $graphLookup: {
+      from: "empleados",
+      startWith: "$_id",
+      connectFromField: "_id",
+      connectToField: "managerId",
+      as: "subordinados"
+    }
+  },
+  {
+    $match: { nombre: "Ana" }
+  }
+])
+
+
+
+
 
 
 
