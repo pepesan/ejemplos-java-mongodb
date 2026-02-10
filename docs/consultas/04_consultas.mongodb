@@ -401,3 +401,30 @@ db.vehiculos.countDocuments()
 db.vehiculos.countDocuments({
     precio: { $gt: 15000 }
 })
+
+
+// Metemos datos en la colección "cursos" con un campo "tags" que es un array de etiquetas
+db.cursos.insertMany([
+  {
+    nombre: "Docker básico",
+    tags: ["docker", "contenedores", "devops"]
+  },
+  {
+    nombre: "Kubernetes avanzado",
+    tags: ["kubernetes", "contenedores", "orquestación"]
+  },
+  {
+    nombre: "MongoDB fundamentals",
+    tags: ["mongodb", "bases de datos", "nosql"]
+  },
+  {
+    nombre: "DevOps completo",
+    tags: ["docker", "kubernetes", "ci/cd", "devops"]
+  }
+])
+// Encuentra cursos que tengan tanto la etiqueta "docker" como la etiqueta "devops"
+db.cursos.find({
+  tags: { $all: ["docker", "devops"] }
+})
+
+

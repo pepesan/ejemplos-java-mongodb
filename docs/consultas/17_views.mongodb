@@ -1,0 +1,59 @@
+/*
+Las views:
+
+son solo lectura
+
+no permiten insert, update ni delete
+
+No ocupan espacio de datos
+
+Se recalculan en cada consulta
+
+Respetan permisos de la colección base
+
+Se crean con createView o con db.createView(...)
+*/
+
+// metemos datos de ejemplo
+
+db.ventas.insertMany([
+  { producto: "Teclado", categoria: "Periféricos", importe: 25 },
+  { producto: "Ratón", categoria: "Periféricos", importe: 15 },
+  { producto: "Monitor", categoria: "Pantallas", importe: 180 },
+  { producto: "Portátil", categoria: "Ordenadores", importe: 950 },
+  { producto: "Tablet", categoria: "Ordenadores", importe: 320 },
+  { producto: "Impresora", categoria: "Periféricos", importe: 120 }
+])
+
+// creamos una view que calcula el importe con IVA (21%) para cada venta
+db.createView(
+  "ventasConIVA",     // nombre de la view
+  "ventas",           // colección origen
+  [
+    {
+      $addFields: {
+        importeConIVA: { $multiply: ["$importe", 1.21] }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        producto: 1,
+        categoria: 1,
+        importeConIVA: 1
+      }
+    }
+  ]
+)
+// consultamos la view para ver los resultados
+db.ventasConIVA.find()
+// podemos filtrar por categoría para ver solo los periféricos con IVA incluido
+db.ventasConIVA.find({ categoria: "Periféricos" })
+// o podemos usar agregación para obtener solo las ventas con importe con IVA mayor a 100
+db.ventasConIVA.aggregate([
+  { $match: { importeConIVA: { $gt: 100 } } }
+])
+
+// borramos la view al finalizar
+// db.ventasConIVA.drop()
+

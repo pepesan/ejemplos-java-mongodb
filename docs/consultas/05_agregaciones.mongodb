@@ -682,6 +682,43 @@ db.pedidos.aggregate([
 ])
 
 
+/*
+$merge:
+
+escribe en base de datos
+
+solo se usa en aggregation
+
+Sustituye a muchos casos de $out
+*/
+// Metemos datos de ejemplo en la colección "ventas" para mostrar el uso de $merge
+db.ventas.insertMany([
+  { _id: 1, producto: "Teclado", categoria: "Periféricos", importe: 25 },
+  { _id: 2, producto: "Ratón", categoria: "Periféricos", importe: 15 },
+  { _id: 3, producto: "Monitor", categoria: "Pantallas", importe: 180 },
+  { _id: 4, producto: "Portátil", categoria: "Ordenadores", importe: 950 },
+  { _id: 5, producto: "Tablet", categoria: "Ordenadores", importe: 320 }
+])
+// Agregación para calcular el total de ventas por categoría y guardar el resultado en una nueva colección "resumenVentas"
+db.ventas.aggregate([
+  {
+    $group: {
+      _id: "$categoria",
+      totalVentas: { $sum: "$importe" },
+      numeroProductos: { $sum: 1 }
+    }
+  },
+  {
+    $merge: {
+      into: "resumenVentas",
+      on: "_id",
+      whenMatched: "replace",
+      whenNotMatched: "insert"
+    }
+  }
+])
+
+
 
 
 
