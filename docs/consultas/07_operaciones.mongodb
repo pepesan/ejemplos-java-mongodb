@@ -77,67 +77,6 @@ db.empleadosVentas.aggregate([
   }
 ])
 
-// Unwind
-
-db.pedidosClientes.insertMany([
-  {
-    cliente: "Ana",
-    fecha: "2025-01-10",
-    productos: [
-      { nombre: "Teclado", cantidad: 1, precio: 25.99 },
-      { nombre: "Ratón",   cantidad: 2, precio: 15.50 }
-    ]
-  },
-  {
-    cliente: "Luis",
-    fecha: "2025-01-11",
-    productos: [
-      { nombre: "Silla Oficina",   cantidad: 1, precio: 120.00 },
-      { nombre: "Mesa Escritorio", cantidad: 1, precio: 210.00 }
-    ]
-  },
-  {
-    cliente: "Marta",
-    fecha: "2025-01-12",
-    productos: [
-      { nombre: "Botella Agua", cantidad: 3, precio: 8.99 },
-      { nombre: "Ratón",        cantidad: 1, precio: 15.50 },
-      { nombre: "Teclado",      cantidad: 1, precio: 25.99 }
-    ]
-  }
-])
-
-// Muestra los pedidos con productos desglosados
-db.pedidosClientes.aggregate([
-  { $unwind: "$productos" }
-])
-
-// Calcula el total vendido por producto
-db.pedidosClientes.aggregate([
-  { $unwind: "$productos" },
-  {
-    $group: {
-      _id: "$productos.nombre",
-      unidadesVendidas: { $sum: "$productos.cantidad" }
-    }
-  }
-])
-
-// Calcula el importe total vendido por producto
-db.pedidosClientes.aggregate([
-  { $unwind: "$productos" },
-  {
-    $group: {
-      _id: "$productos.nombre",
-      importeTotal: {
-        $sum: {
-          $multiply: ["$productos.cantidad", "$productos.precio"]
-        }
-      }
-    }
-  }
-])
-
 
 db.usuarios.bulkWrite([
   {
