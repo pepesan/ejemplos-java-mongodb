@@ -609,6 +609,80 @@ db.empleados.aggregate([
   }
 ])
 
+// metemos datos de ejemplo en la colección "ventas" para mostrar el uso de $bucketAuto
+db.ventas.insertMany([
+  { producto: "Teclado", importe: 25 },
+  { producto: "Ratón", importe: 15 },
+  { producto: "Monitor", importe: 180 },
+  { producto: "Portátil", importe: 950 },
+  { producto: "Tablet", importe: 320 },
+  { producto: "Impresora", importe: 120 },
+  { producto: "Móvil", importe: 650 },
+  { producto: "Auriculares", importe: 60 },
+  { producto: "Webcam", importe: 75 },
+  { producto: "Disco SSD", importe: 140 }
+])
+// Agregación para agrupar las ventas en 3 buckets automáticos según el importe
+/*
+Analiza los valores de importe
+
+Crea 3 rangos (intervalos) automáticamente
+
+Intenta que cada bucket tenga un número similar de documentos
+*/
+db.ventas.aggregate([
+  {
+    $bucketAuto: {
+      groupBy: "$importe",
+      buckets: 3
+    }
+  }
+])
+
+// Metemos datos de ejemplo en la colección "productos" para mostrar el uso de $addFields
+db.productos.insertMany([
+  { nombre: "Teclado", precio: 25, stock: 10 },
+  { nombre: "Ratón", precio: 15, stock: 20 },
+  { nombre: "Monitor", precio: 180, stock: 5 },
+  { nombre: "Portátil", precio: 950, stock: 3 },
+  { nombre: "Tablet", precio: 320, stock: 7 }
+])
+// Agregación para añadir un nuevo campo "valorTotal" que es el resultado de multiplicar el precio por el stock
+/*
+Mantiene todos los campos originales
+
+Añade el campo valorTotal
+
+El cálculo se hace por documento
+*/
+db.productos.aggregate([
+  {
+    $addFields: {
+      valorTotal: { $multiply: ["$precio", "$stock"] }
+    }
+  }
+])
+
+
+// Metemos datos de ejemplo en la colección "pedidos" para mostrar el uso de $sortByCount
+db.pedidos.insertMany([
+  { cliente: "Ana", producto: "Teclado" },
+  { cliente: "Luis", producto: "Ratón" },
+  { cliente: "Ana", producto: "Monitor" },
+  { cliente: "Marta", producto: "Teclado" },
+  { cliente: "Ana", producto: "Teclado" },
+  { cliente: "Luis", producto: "Monitor" },
+  { cliente: "Carlos", producto: "Ratón" },
+  { cliente: "Marta", producto: "Ratón" },
+  { cliente: "Ana", producto: "Ratón" }
+])
+// Agregación para contar cuántos pedidos hay por producto y ordenarlos de mayor a menor
+db.pedidos.aggregate([
+  { $sortByCount: "$producto" }
+])
+
+
+
 
 
 
