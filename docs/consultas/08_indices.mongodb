@@ -149,4 +149,189 @@ db.trades
 
 
 
+// datos de ejemplo para la colección "users" para mostrar cómo el orden de los campos en un índice afecta a su uso
+db.users.insertMany([
+  { userId: 1, username: "anonymous", score: 15 },
+  { userId: 2, username: "anonymous", score: 30 },
+  { userId: 3, username: "anonymous", score: 25 },
+  { userId: 4, username: "anonymous", score: 80 },
+  { userId: 5, username: "anonymous", score: 60 },
+
+  { userId: 1, username: "carlos", score: 50 },
+  { userId: 2, username: "carlos", score: 20 },
+  { userId: 3, username: "carlos", score: 70 },
+  { userId: 4, username: "carlos", score: 10 },
+
+  { userId: 2, username: "lucia", score: 90 },
+  { userId: 3, username: "lucia", score: 40 },
+  { userId: 4, username: "lucia", score: 55 },
+  { userId: 5, username: "lucia", score: 35 },
+
+  { userId: 3, username: "pedro", score: 65 },
+  { userId: 4, username: "pedro", score: 45 },
+  { userId: 5, username: "pedro", score: 75 },
+
+  { userId: 6, username: "anonymous", score: 5 },
+  { userId: 7, username: "anonymous", score: 95 },
+  { userId: 8, username: "anonymous", score: 50 }
+])
+
+// Consulta que no puede usar el índice porque el operador $gt no es compatible con el orden del índice
+db.users.find({
+    userId: { $gt: 2
+    },
+    username: "anonymous"
+}).explain("executionStats");
+// Veremos que lo hace a través de un COLLSCAN, lo que indica que se ha escaneado toda la colección
+
+// Crear un índice en el campo "userId" y "username" para mejorar el rendimiento de la consulta
+// Primero va el username porque es el campo que se está comparando con igualdad, mientras que userId se compara con un rango
+db.users.createIndex({ username: 1, userId: 1 })
+
+// Consulta con índice que ahora puede usar el índice compuesto para filtrar por username y luego aplicar el rango en userId
+db.users.find({
+    userId: { $gt: 2
+    },
+    username: "anonymous"
+}).explain("executionStats");
+// Deberíamos ver un IXSCAN en el plan de consulta, lo que indica que se ha utilizado el índice para filtrar los resultados, y no un COLLSCAN.
+
+// Consulta con ordenación que no puede usar el índice porque el orden de los campos en el índice no coincide con el orden de la consulta
+db.users.find({
+  userId: { $gt: 2 },
+  username: "anonymous"
+}).sort({
+  score: 1
+}).explain("executionStats")
+
+// Crear un índice compuesto en los campos "username", "score" y "userId" para mejorar el rendimiento de la consulta con ordenación
+db.users.createIndex({ username: 1, score: 1, userId: 1 })
+// Consulta con índice que ahora puede usar el índice compuesto para filtrar por username, ordenar por score y luego aplicar el rango en userId
+db.users.find({
+  userId: { $gt: 2 },
+  username: "anonymous"
+}).sort({
+  score: 1
+}).explain("executionStats")
+
+// Explain de la consulta para ver el plan de ejecución ganador dentro del queryPlanner
+db.users.find({
+  userId: { $gt: 2 },
+  username: "anonymous"
+}).sort({
+  score: 1
+}).explain().queryPlanner.winningPlan
+
+// uso de hint para forzar el uso de un índice específico
+// Consulta con hint para forzar el uso del índice compuesto en "username" y "userId"
+db.users.find({
+    userId: { $gt: 2 },
+    username: "anonymous"
+    }).sort({
+    score: 1
+    }).hint({ username: 1, userId: 1 }).explain("executionStats")
+
+
+// ejemplo de uso de allowDiskUse para permitir que la consulta use el disco si el conjunto de resultados es demasiado grande para la memoria
+// Consulta con allowDiskUse para permitir el uso de disco si el conjunto de resultados es grande
+db.users.find({
+    userId: { $gt: 2 },
+    username: "anonymous"
+    }).sort({
+    score: 1
+    }).allowDiskUse(true).explain("executionStats")
+
+
+// Indices de tipo Wildcard para indexar campos con nombres dinámicos o desconocidos
+// Metemos datos en la colección "products" con campos dinámicos
+db.products.insertMany([
+  {
+    name: "Camiseta deportiva",
+    category: "ropa",
+    product_attributes: {
+      color: "rojo",
+      talla: "M",
+      material: "algodon"
+    }
+  },
+  {
+    name: "Zapatillas running",
+    category: "calzado",
+    product_attributes: {
+      color: "negro",
+      talla: 42,
+      impermeable: true
+    }
+  },
+  {
+    name: "Portátil",
+    category: "electronica",
+    product_attributes: {
+      marca: "Dell",
+      ram: "16GB",
+      almacenamiento: "512GB",
+      pantalla: "15 pulgadas"
+    }
+  },
+  {
+    name: "Smartphone",
+    category: "electronica",
+    product_attributes: {
+      marca: "Samsung",
+      almacenamiento: "128GB",
+      cincog: true
+    }
+  },
+  {
+    name: "Chaqueta",
+    category: "ropa",
+    product_attributes: {
+      color: "azul",
+      talla: "L",
+      impermeable: true,
+      capucha: true
+    }
+  }
+])
+// Crear un índice wildcard en el campo "product_attributes" para indexar todos los subcampos dinámicos
+db.products.createIndex({ "product_attributes.$**": 1 })
+
+// Consulta que puede usar el índice wildcard para buscar productos con un atributo específico, por ejemplo, color "rojo"
+db.products.find({
+  "product_attributes.color": "rojo"
+})
+// Consulta que puede usar el índice wildcard para buscar productos con un atributo específico, por ejemplo, marca "Dell"
+db.products.find({
+  "product_attributes.marca": "Dell"
+})
+// Consulta que puede usar el índice wildcard para buscar productos con un atributo específico, por ejemplo, impermeable: true
+db.products.find({
+  "product_attributes.impermeable": true
+})
+
+// consulta con explain winningPlan para ver que se ha utilizado el índice wildcard
+db.products.find({
+  "product_attributes.color": "rojo"
+}).explain().queryPlanner.winningPlan
+// Crear un índice wildcard sin especificar el campo para indexar todos los campos de la colección, incluyendo todos los campos excepto el _id
+db.products.createIndex(
+  { "$**": 1 },
+)
+
+// Crear un índice wildcard con proyección para indexar solo ciertos campos dentro de product_attributes incluyendo el campo _id
+db.products.createIndex(
+  { "$**": 1 },
+  {
+    wildcardProjection: {
+      _id: 1,
+      "product_attributes": 0
+    }
+  }
+)
+// Crear un índice wildcard compuesto para indexar el campo "category" y todos los subcampos dinámicos dentro de "product_attributes"
+db.products.createIndex({
+  category: 1,
+  "product_attributes.$**": 1
+})
+
 
