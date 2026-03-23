@@ -335,3 +335,167 @@ db.products.createIndex({
 })
 
 
+// Crea una colección para luego crear un índice parcial que solo indexe los documentos que cumplan una condición específica
+db.orders.insertMany([
+    { orderId: 1, status: "pending", total: 100 },
+    { orderId: 2, status: "shipped", total: 150 },
+    { orderId: 3, status: "pending", total: 200 },
+    { orderId: 4, status: "delivered", total: 250 },
+    { orderId: 5, status: "pending", total: 300 }
+])
+// Crear un índice parcial en el campo "status" que solo indexe los documentos con status
+// "pending" para mejorar el rendimiento de las consultas que buscan solo pedidos pendientes
+db.orders.createIndex(
+    { status: 1, orderId: 1 },
+    { partialFilterExpression: { status: "pending" } }
+)
+// Consulta que puede usar el índice parcial para buscar solo los pedidos con status "pending" y su explain para ver el plan de consulta ganador
+db.orders.find({ status: "pending" }).explain().queryPlanner.winningPlan
+
+//
+db.usuarios.insertMany([
+  { _id: 1, nombre: "Ana", email: "ana@example.com" },
+  { _id: 2, nombre: "Luis" },
+  { _id: 3, nombre: "Carlos", email: "carlos@example.com" },
+  { _id: 4, nombre: "Marta" }
+])
+
+// consulta sin índice en el campo "email", lo que resultará en un COLLSCAN
+db.usuarios.find({ email: "ana@example.com" })
+// Explicar el plan de consulta sin índice
+db.usuarios.find({ email: "ana@example.com" }).explain().queryPlanner.winningPlan
+// Crear un índice en el campo "email" con la opción sparse para que solo indexe los documentos que tienen el campo "email" presente
+db.usuarios.createIndex(
+  { email: 1 },
+  { sparse: true }
+)
+// consulta con índice sparse, lo que resultará en un IXSCAN que solo indexa los documentos que tienen el campo "email" presente
+db.usuarios.find({ email: { $exists: true } }).explain().queryPlanner.winningPlan
+// consulta con índice sparse para ordenar por el campo email, lo que resultará en un COLLSCAN porque el índice sparse no puede ser utilizado para ordenar por un campo que no está presente en todos los documentos
+db.usuarios.find().sort({email: 1}).explain().queryPlanner.winningPlan
+
+
+// Crear una colección con un índice clusterizado en el campo "_id" para mejorar el rendimiento de las consultas que ordenan por este campo
+db.createCollection("eventos", {
+  clusteredIndex: {
+    key: { _id: 1 },
+    unique: true
+  }
+})
+// Insertar documentos en la colección "eventos" con un orden de _id diferente al orden de inserción para mostrar cómo el índice clusterizado mantiene los documentos ordenados físicamente en el disco según el campo _id
+db.eventos.insertMany([
+  { _id: 3, tipo: "login", usuario: "Ana" },
+  { _id: 1, tipo: "logout", usuario: "Luis" },
+  { _id: 2, tipo: "login", usuario: "Carlos" }
+])
+// Consulta que puede usar el índice clusterizado para ordenar por el campo _id, lo que resultará en un IXSCAN que devuelve los documentos ordenados por _id
+db.eventos.find({ _id: { $gte: 2 } })
+// Explicar el plan de consulta con índice clusterizado para ver que se ha utilizado el índice clusterizado para ordenar los resultados por _id
+db.eventos.find({ _id: { $gte: 2 } }).explain("executionStats")
+
+
+// Crear una colección de series temporales para almacenar datos de mediciones con un índice clusterizado en el campo "timestamp" para mejorar el rendimiento de las consultas que ordenan por este campo
+db.createCollection("mediciones", {
+  timeseries: {
+    timeField: "timestamp",
+    metaField: "sensor",
+    granularity: "minutes"
+  }
+})
+// Insertar documentos en la colección "mediciones" con diferentes timestamps para mostrar cómo el índice clusterizado mantiene los documentos ordenados físicamente en el disco según el campo timestamp
+db.mediciones.insertMany([
+  {
+    timestamp: ISODate("2026-01-01T10:00:00Z"),
+    sensor: { id: "A", ubicacion: "sala1" },
+    temperatura: 22
+  },
+  {
+    timestamp: ISODate("2026-01-01T10:01:00Z"),
+    sensor: { id: "A", ubicacion: "sala1" },
+    temperatura: 23
+  },
+  {
+    timestamp: ISODate("2026-01-01T10:02:00Z"),
+    sensor: { id: "A", ubicacion: "sala1" },
+    temperatura: 24
+  },
+  {
+    timestamp: ISODate("2026-01-01T10:00:00Z"),
+    sensor: { id: "B", ubicacion: "sala2" },
+    temperatura: 19
+  }
+])
+// Consulta que puede usar el índice clusterizado para ordenar por el campo timestamp, lo que resultará en un IXSCAN que devuelve los documentos ordenados por timestamp
+db.mediciones.find({
+  timestamp: {
+    $gte: ISODate("2026-01-01T10:00:00Z"),
+    $lte: ISODate("2026-01-01T10:02:00Z")
+  }
+})
+// Explicar el plan de consulta con índice clusterizado para ver que se ha utilizado el índice clusterizado para ordenar los resultados por timestamp
+db.mediciones.find({
+  timestamp: {
+    $gte: ISODate("2026-01-01T10:00:00Z"),
+    $lte: ISODate("2026-01-01T10:02:00Z")
+  }
+}).explain("executionStats")
+// Explain de acceso directo al winningPlan para ver que se ha utilizado el índice clusterizado para ordenar los resultados por timestamp
+db.mediciones.find({
+  timestamp: {
+    $gte: ISODate("2026-01-01T10:00:00Z"),
+    $lte: ISODate("2026-01-01T10:02:00Z")
+  }
+}).explain("queryPlanner").stages[0].$cursor.queryPlanner.winningPlan
+
+// Crear un índice en el campo "sensor.id" para mejorar el rendimiento de las consultas que filtran por este campo
+db.mediciones.createIndex({ "sensor.id": 1 })
+// Consulta que puede usar el índice en "sensor.id" para filtrar por el campo "sensor.id" y ordenar por timestamp, lo que resultará en un IXSCAN que devuelve los documentos filtrados por sensor.id y ordenados por timestamp gracias al índice clusterizado
+db.mediciones.find({
+  "sensor.id": "A",
+  timestamp: {
+    $gte: ISODate("2026-01-01T10:00:00Z"),
+    $lte: ISODate("2026-01-01T10:02:00Z")
+  }
+}).explain("queryPlanner").stages[0].$cursor.queryPlanner.winningPlan
+
+// Consulta para obtener estadísticas de uso de índices en la colección "mediciones"
+db.mediciones.aggregate([
+  { $indexStats: {} }
+])
+
+// Ejemplo de salida
+
+[
+  {
+    name: 'sensor_1_timestamp_1',
+    host: 'a58bae95b2a7:27017',
+    accesses: { ops: Long('2'), since: ISODate('2026-03-23T19:29:06.879Z') },
+    spec: {
+      v: 2,
+      key: { sensor: 1, timestamp: 1 },
+      name: 'sensor_1_timestamp_1'
+    },
+    key: { sensor: 1, timestamp: 1 }
+  },
+  {
+    name: 'sensor.id_1',
+    host: 'a58bae95b2a7:27017',
+    accesses: { ops: Long('1'), since: ISODate('2026-03-23T19:46:27.086Z') },
+    spec: { v: 2, key: { 'sensor.id': 1 }, name: 'sensor.id_1' },
+    key: { 'sensor.id': 1 }
+  }
+]
+// Consulta para obtener estadísticas de uso del índice específico "sensor_1_timestamp_1" en la colección "mediciones"
+db.mediciones.aggregate([
+    { $indexStats: {} },
+    { $match: { name: "sensor_1_timestamp_1" } }
+])
+
+// Activa el profiling a nivel 1 para loggear las consultas lentas que tarden más de 100 ms, lo que nos permitirá identificar consultas que podrían beneficiarse de índices adicionales o ajustes en los índices existentes
+db.setProfilingLevel(1, {
+  slowms: 100   // loggea queries > 100 ms
+})
+// activa el profiling a nivel 2 para loggear todas las consultas, lo que nos permitirá analizar el rendimiento de todas las consultas y su uso de índices para optimizar la estructura de índices en la base de datos
+db.setProfilingLevel(2)
+// activa el profiling a nivel 0 para desactivar el loggeo de consultas, lo que es recomendable una vez que hayamos identificado y optimizado las consultas lentas para evitar un impacto negativo en el rendimiento de la base de datos debido al overhead del profiling
+db.setProfilingLevel(0)
