@@ -11,6 +11,7 @@ db.clientes.find()
 // Inserta varios documentos en la coleccion "clientes"
 db.clientes.insertMany([
   { nombre: "Marta", edad: 28, email: "marta@example.com" },
+  { nombre: "Utre", edad: 38, email: "marta@example.com", direccion: { calle: "", puerta: "", cp: 37787 } },
   { nombre: "Carlos", edad: 35, email: "carlos@example.com" }
 ])
 
