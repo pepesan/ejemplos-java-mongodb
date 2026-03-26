@@ -1,0 +1,11 @@
+nombre,sku,precio,stock,categoria,fecha_ingreso,estado
+"Silla Ergonómica Pro","FUR-001",249.99,20,"Muebles",2026-01-10,nuevo
+"Cafetera Express Auto","KIT-055",120.00,12,"Hogar",2026-01-12,nuevo
+"Disco Duro Externo 2TB","STG-992",85.50,45,"Tecnología",2026-01-20,nuevo
+"Set de Pesas 20kg","FIT-102",65.00,10,"Deportes",2026-02-05,reacondicionado
+"Cámara Seguridad Wi-Fi","SEC-883",45.99,30,"Hogar",2026-02-14,nuevo
+"Auriculares Noise Cancelling","AUD-009",199.00,25,"Tecnología",2026-02-28,nuevo
+"Escritorio Elevable","FUR-002",310.00,5,"Muebles",2026-03-05,nuevo
+"Teclado Mecánico RGB","TEC-012",75.25,18,"Tecnología",2026-03-15,nuevo
+"Lámpara Escritorio LED","LUM-441",29.99,50,"Oficina",2026-03-20,nuevo
+"Bicicleta Estática","FIT-550",420.00,3,"Deportes",2026-03-25,nuevo
