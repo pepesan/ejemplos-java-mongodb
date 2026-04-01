@@ -1,0 +1,42 @@
+[
+  {
+    "username": "azul_marino",
+    "password": "hashed_password_123",
+    "email": "ana.garcia@email.com",
+    "pais_origen": "España",
+    "active": true,
+    "fecha_registro": { "$date": "2026-01-10T14:20:00Z" }
+  },
+  {
+    "username": "carlos_dev",
+    "password": "hashed_password_456",
+    "email": "c.mendoza@servidor.net",
+    "pais_origen": "México",
+    "active": true,
+    "fecha_registro": { "$date": "2026-02-15T09:00:00Z" }
+  },
+  {
+    "username": "sofia_sky",
+    "password": "hashed_password_789",
+    "email": "sofia.v@webmail.com",
+    "pais_origen": "Argentina",
+    "active": false,
+    "fecha_registro": { "$date": "2026-03-01T18:45:00Z" }
+  },
+  {
+    "username": "lucas_trek",
+    "password": "hashed_password_012",
+    "email": "lucas.paz@provider.com",
+    "pais_origen": "Colombia",
+    "active": true,
+    "fecha_registro": { "$date": "2026-03-12T12:30:00Z" }
+  },
+  {
+    "username": "elena_art",
+    "password": "hashed_password_345",
+    "email": "e.torres@estudio.es",
+    "pais_origen": "Chile",
+    "active": true,
+    "fecha_registro": { "$date": "2026-03-20T10:15:00Z" }
+  }
+]

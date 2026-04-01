@@ -32,6 +32,44 @@ db.system.profile.find().sort({ ts: -1 }).limit(10);
 db.setProfilingLevel(0);
 
 
+// Ejemplo de uso de consultas lentas
+use testDB
+
+const bulk = []
+for (let i = 0; i < 100000; i++) {
+  bulk.push({
+    userId: i,
+    name: "user_" + i,
+    age: Math.floor(Math.random() * 80),
+    score: Math.random() * 1000,
+    createdAt: new Date(),
+    text: "Lorem ipsum dolor sit amet " + i
+  })
+
+  // Insertar en lotes para no petar memoria
+  if (bulk.length === 1000) {
+    db.users.insertMany(bulk)
+    bulk.length = 0
+  }
+}
+
+// Insertar lo que quede
+if (bulk.length > 0) {
+  db.users.insertMany(bulk)
+}
+// Registrar operaciones que tarden más de 100 milisegundos
+db.setProfilingLevel(1, { slowms: 50 });
+// Ejemplo de consulta lenta
+db.users.find({
+  text: /user_9/,
+  score: { $gt: 10 }
+}).sort({ createdAt: -1 })
+
+// Comprobar el registro en el log
+cat /var/log/mongodb/mongod.log 2>&1 | grep "Slow query" | jq
+
+// Desactivar el profiler
+db.setProfilingLevel(0);
 
 
 
