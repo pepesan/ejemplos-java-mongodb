@@ -1,0 +1,12 @@
+// Salida el estado del servidor, incluyendo estadísticas de rendimiento
+db.runCommand({ serverStatus: 1})
+// Obtener el número de conexiones actuales al servidor
+db.runCommand({ serverStatus: 1}).connections
+
+// currentOp muestra las operaciones en curso, incluyendo aquellas que están bloqueadas o esperando recursos
+db.currentOp()
+// Para obtener una vista más detallada de las operaciones activas, incluyendo aquellas que están bloqueadas o esperando recursos, puedes usar:
+db.adminCommand({ currentOp: 1, $all: true, active: true })
+// killOp permite terminar una operación específica. Para usarlo, primero debes identificar el ID de la operación que deseas finalizar a través de currentOp, y luego ejecutar:
+db.killOp(<opid>)
+db.adminCommand({ killOp: 1, op: 3072 })
