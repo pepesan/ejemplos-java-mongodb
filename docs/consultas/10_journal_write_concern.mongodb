@@ -12,6 +12,12 @@ db.inventory.insertOne(
   { writeConcern: { w: 1 } }
 );
 
+// Exigimos que la escritura se replique en al menos 2 nodos secundarios y que se confirme en un plazo de 5 segundos:
+db.miColeccion.insertOne(
+  { nombre: "Carlos", edad: 40 },
+  { writeConcern: { w: 2, wtimeout: 5000 } }
+)
+
 // Garantizamos que la operación ha sido registrada en el journal:
 
 db.inventory.insertOne(
@@ -31,3 +37,11 @@ db.inventory.insertOne(
 db.getMongo().setWriteConcern(
   { w: "majority", j: true, wtimeout: 2000 }
 );
+// Todas las operaciones de la sesión usen un read  y write concern específico:
+use admin;
+
+db.adminCommand({
+  setDefaultRWConcern: 1, // siempre se aplica 1
+  defaultWriteConcern: { w: 2, wtimeout: 5000 }, // se aplica si el cliente no especifica ninguno
+  defaultReadConcern: { level: "majority" } // igual, para lecturas
+});

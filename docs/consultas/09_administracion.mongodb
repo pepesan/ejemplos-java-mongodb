@@ -71,8 +71,14 @@ cat /var/log/mongodb/mongod.log 2>&1 | grep "Slow query" | jq
 // Desactivar el profiler
 db.setProfilingLevel(0);
 
+// Bloquear la base de datos para mantenimiento (solo lectura)
+db.fsyncLock()
+// Desbloquear la base de datos después del mantenimiento
+db.fsyncUnlock()
 
+// Crear usuario de backup
 
+db.createUser({ user: "backup-admin", pwd: "backup-pass", roles: ["backup"]})
 
 
 
