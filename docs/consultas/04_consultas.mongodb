@@ -35,6 +35,22 @@ db.clientes.find({
 })
 
 
+
+// metemos un dato con objeto embebido para mostrar consultas con campos anidados
+db.clientes.insertOne({
+    nombre: "Utre",
+    edad: 38,
+    email: "utre@example.com",
+    direccion: {
+        calle: "Calle Falsa",
+        puerta: "3B",
+        cp: 28001
+    }
+})
+
+// Consulta de campo anidado
+db.clientes.find({"direccion.cp": 28001})
+
 // Crea la coleccion "productos"
 db.productos.insertMany([
   { _id: ObjectId("66f100000000000000000001"), nombre: "Teclado",        categoria: "Tecnología", precio: 25.99, stock: 100 },
