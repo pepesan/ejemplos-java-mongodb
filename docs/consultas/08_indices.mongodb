@@ -22,20 +22,32 @@ db.usuarios_demo.find({ ciudad: "Madrid" }).explain();
 // Consulta los índices existentes en la colección
 db.usuarios_demo.getIndexes();
 
+// Crear un índice único en el campo "nombre" para garantizar que no se repitan valores de email en la colección "usuarios_demo"
+db.usuarios_demo.createIndex({nombre:1}, {unique:true})
 
-// Ejemplo de índice compuesto
+// intentamos meter un documento con un nombre que ya existe para ver que se lanza un error de clave duplicada
+db.usuarios_demo.insertOne({ nombre: "Ana", edad: 28, ciudad: "Valencia" })
+// Consulta los indices existentes en la colección para ver el índice único creado
+db.usuarios_demo.getIndexes()
 
-// Metemos datos en la colección "registros_ventas"
-db.registros_ventas.insertMany([
-  { producto: "PC", precio: 900, tienda: "Madrid" },
-  { producto: "PC", precio: 850, tienda: "Valencia" },
-  { producto: "TV", precio: 600, tienda: "Madrid" },
-  { producto: "Tablet", precio: 300, tienda: "Madrid" }
-]);
-// Crear un índice compuesto en los campos "producto" (ascendente) y "precio" (descendente)
-db.registros_ventas.createIndex({ producto: 1, precio: -1 });
-// consulta el índice creado
-db.registros_ventas.find({ producto: "PC" }).sort({ precio: -1 });
+// Consulta con índice único para buscar por el campo "nombre"
+db.usuarios_demo.find({nombre: "Ana"}).explain()
+
+// Actualizamos los documentos para añadir un nuevo campo "categorias" con un array de valores para luego crear un índice multikey en ese campo
+db.usuarios_demo.updateMany({}, {$set: {categorias: ["global", "local"]}})
+
+// Crear un índice multikey en el campo "categorias" para indexar los valores del array
+db.usuarios_demo.createIndex({ categorias: 1 });
+
+// Visualizar los índices existentes en la colección para ver el índice multikey creado
+db.usuarios_demo.getIndexes()
+
+// Consulta que haga uso del índice multikey para buscar documentos que tengan la categoría "global"
+db.usuarios_demo.find({ categorias: "global" }).explain();
+
+// Consulta que haga uso del índice multikey para buscar documentos que tengan la categoría "global" y solo devuelva el campo "categorias" sin el _id para ver que se ha utilizado el índice multikey para filtrar los resultados
+db.usuarios_demo.find({ categorias: "global" }, {_id: 0 , categorias: 1}).explain();
+
 
 // Índices en arrays
 // Metemos datos en la colección "catalogo_etiquetas"
@@ -52,6 +64,26 @@ db.catalogo_etiquetas.find({ tags: "backend" });
 
 // Explicar el plan de consulta para la búsqueda en el array
 db.catalogo_etiquetas.find({ tags: "backend" }).explain();
+
+db.catalogo_etiquetas.dropIndexes({ tags: 1 })
+
+// get indexes
+db.catalogo_etiquetas.getIndexes()
+// Ejemplo de índice compuesto
+
+// Metemos datos en la colección "registros_ventas"
+db.registros_ventas.insertMany([
+  { producto: "PC", precio: 900, tienda: "Madrid" },
+  { producto: "PC", precio: 850, tienda: "Valencia" },
+  { producto: "TV", precio: 600, tienda: "Madrid" },
+  { producto: "Tablet", precio: 300, tienda: "Madrid" }
+]);
+// Crear un índice compuesto en los campos "producto" (ascendente) y "precio" (descendente)
+db.registros_ventas.createIndex({ producto: 1, precio: -1 });
+// consulta el índice creado
+db.registros_ventas.find({ producto: "PC" }).sort({ precio: -1 });
+
+
 
 // Índices geoespaciales
 // Metemos datos en la colección "puntos_interes"
