@@ -51,6 +51,57 @@ db.clientes.insertOne({
 // Consulta de campo anidado
 db.clientes.find({"direccion.cp": 28001})
 
+// Crear la colección "pedidos"
+db.pedidos.insertMany([
+{
+_id: ObjectId("66f200000000000000000001"),
+cliente: "Ana",
+productos: [
+{ nombre: "Teclado", cantidad: 1, precio: 25.99 },
+{ nombre: "Ratón", cantidad: 2, precio: 15.50 }
+]
+},
+{
+_id: ObjectId("66f200000000000000000002"),
+cliente: "Luis",
+productos: [
+{ nombre: "Mesa Escritorio", cantidad: 1, precio: 210.00 },
+{ nombre: "Silla Oficina", cantidad: 1, precio: 120.00 }
+]
+},
+{
+_id: ObjectId("66f200000000000000000003"),
+cliente: "Marta",
+productos: [
+{ nombre: "Botella Agua", cantidad: 3, precio: 8.99 },
+{ nombre: "Ratón", cantidad: 1, precio: 15.50 },
+{ nombre: "Teclado", cantidad: 1, precio: 25.99 }
+]
+}
+])
+// Consulta de campo anidado con operador de comparación
+db.pedidos.find({"productos.nombre":"Ratón"})
+
+// insert objeto con array de strings
+db.clientes.insertOne({
+    nombre: "Carlos",
+    edad: 35,
+    productos: ["Ratón","Teclado"]
+})
+// Consulta de campo con array de strings
+db.clientes.find({
+"productos": "Ratón"
+})
+// Consulta de campo con array de objetos usando $elemMatch
+db.pedidos.find({
+    productos: {
+        $elemMatch: {
+            nombre: "Teclado",
+            cantidad: 1
+        }
+    }
+})
+
 // Crea la coleccion "productos"
 db.productos.insertMany([
   { _id: ObjectId("66f100000000000000000001"), nombre: "Teclado",        categoria: "Tecnología", precio: 25.99, stock: 100 },
@@ -92,6 +143,14 @@ db.productos.find({
   precio: { $lt: 30 }
 })
 
+// Consultar productos con precio mayor a 20 Y stock menor a 150
+db.productos.find({
+  $and: [
+    { precio: { $gt: 20 } },
+    { stock: { $lt: 150 } }
+  ]
+})
+
 // Consultar productos en la categoría "Tecnología" o con precio mayor a 200
 db.productos.find({
   $or: [
@@ -99,12 +158,19 @@ db.productos.find({
     { precio: { $gt: 200 } }
   ]
 })
-// Consultar productos con precio mayor a 20 Y stock menor a 150
+// Consilta ocn $and y $or combinados: productos que estén en la categoría "Tecnología" o tengan un precio mayor a 200, Y además tengan stock mayor a 50
 db.productos.find({
-  $and: [
-    { precio: { $gt: 20 } },
-    { stock: { $lt: 150 } }
-  ]
+    $and: [
+        {
+            $or: [
+                { categoria: "Tecnología" },
+                { precio: { $gt: 200 } }
+            ]
+        },
+        {
+            stock: { $gt: 50 }
+        }
+    ]
 })
 // Consultar productos que NO estén en la categoría "Mobiliario" ni tengan un precio mayor a 50
 db.productos.find({
