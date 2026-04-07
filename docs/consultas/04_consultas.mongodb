@@ -349,6 +349,87 @@ db.pedidos.updateOne(
     }
   }
 )
+// Mostrar el pedido con _id igual a "66f200000000000000000001" para verificar los cambios
+db.pedidos.findOne(
+{ _id: ObjectId("66f200000000000000000001") }
+)
+// Actualizar el pedido de "Marta" para cambiar las etiquetas a ["tienda", "recogida"]
+db.pedidos.updateOne(
+{ cliente: "Marta" },
+{ $set: { etiquetas: ["tienda", "recogida"] } }
+)
+// Mostrar el pedido de "Marta" para verificar los cambios
+db.pedidos.findOne(
+    { cliente: "Marta" }
+)
+
+// Agregar un nuevo producto al pedido de "Ana Gómez"
+db.pedidos.updateOne(
+    { cliente: "Ana Gómez" },
+    {
+        $push: {
+            productos: {
+                nombre: "Alfombrilla",
+                cantidad: 1,
+                precio: 12.99
+            }
+        }
+    }
+)
+// Mostrar el pedido de "Ana Gómez" para verificar los cambios
+db.pedidos.findOne(
+    { cliente: "Ana Gómez" }
+)
+// Si el cliente "Juan" no existe, se creará un nuevo pedido con el cliente "Juan" y sin productos
+db.pedidos.updateOne(
+{ cliente: "Juan" },
+{ $set: { cliente: "Juan" } },
+{ upsert: true }
+)
+// Mostrar el pedido de "Juan" para verificar que se ha creado
+db.pedidos.findOne(
+    { cliente: "Juan" }
+)
+
+// Marcar el pedido de "Ana Gómez" como enviado y mostrar el documento actualizado
+db.pedidos.findAndModify({
+ query: { cliente: "Ana Gómez" },
+ update: { $set: { enviado: true } },
+ new: true
+})
+
+// Actualizar todos los pedidos para agregar un campo "etiquetas" con un array de etiquetas
+db.pedidos.updateMany(
+    {},
+    { $set: {
+            etiquetas: ["online", "prioritario"]
+        }
+    }
+)
+// Mostrar todos los pedidos para verificar que se han agregado las etiquetas
+db.pedidos.find()
+
+// UpdateMany para marcar como enviado todos los pedidos que contienen el producto "Ratón"
+db.pedidos.updateMany(
+    { "productos.nombre": "Ratón" },
+    { $set: { enviado: true } }
+)
+// borrar el pedido con _id igual a "66f200000000000000000001"
+db.pedidos.deleteOne(
+{ _id: ObjectId("66f200000000000000000001") }
+)
+// Eliminar todos los pedidos del cliente "Marta"
+db.pedidos.deleteMany(
+{ cliente: "Marta" }
+)
+// Eliminar toda la colección "pedidos"
+db.pedidos.deleteMany(
+{}
+)
+// Verificar que la colección "pedidos" está vacía
+db.pedidos.find()
+
+
 // Mostrar los documentos en la colección "pedidos" que tienen exactamente 2 productos
 db.pedidos.find({
   productos: { $size: 2 }
